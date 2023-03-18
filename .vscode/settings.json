@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "testcout.C": "cpp",
+        "cout.C": "cpp",
+        "Efficacite.C": "cpp",
+        "tempsdefonction.C": "cpp",
+        "tempsdereponse.C": "cpp",
+        "tempsreponsetempsreel.C": "cpp",
+        "Efficacitetempsreel.C": "cpp",
+        "couttempsreel.C": "cpp"
+    }
+}
