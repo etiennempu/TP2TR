@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
 	Sendmessage("VL1");
 	Receivemessage();
 	
-
+    //Salut
 	
 	Deconnection();
 	
