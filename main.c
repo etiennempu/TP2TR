@@ -16,7 +16,7 @@
 int main(int argc, char** argv) {
 
    
-	
+	//test
     Connection();
     Sendmessage("AL1");
 	Sendmessage("VL1");
