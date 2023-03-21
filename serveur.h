@@ -2,7 +2,7 @@
 #define SERVEUR
 
 void Connection();
-void Sendmessage(char* format, double valeur);
+void Sendmessage(char* format);
 void Receivemessage();
 void Deconnection();
 
