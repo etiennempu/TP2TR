@@ -31,7 +31,7 @@ void* ecoute(void* arg) {
     while(1) {
         char* message = ReceiveMessage();
         printf("%s", message);
-        switch (atoi(message[2]))
+        switch (atoi(&message[2]))
         {
         case 1:
             /* On met dans le gaz 1 */
