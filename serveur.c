@@ -5,81 +5,49 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#define SERV_PORT 1231
 
+#define TAILLE_MESSAGE 10
 
-int sockSend,sockReceive;
+struct sockaddr_in serverReceive;
+int sockReceive;
 
-void Connection(){
+void OuvrirServeur(){
 	
-	struct sockaddr_in serverSend,serverReceive;
-	
-	//Create socket
-	sockSend = socket(AF_INET , SOCK_STREAM , 0);
-	if (sockSend == -1)
+	// Créer le socket du serveur
+	if ((sockReceive = socket(AF_INET , SOCK_STREAM , 0)) < 0)
 	{
-		printf("Could not create socketSend");
-	}
-	puts("SocketSend created");
-	
-	serverSend.sin_addr.s_addr = inet_addr("192.168.2.60");
-	serverSend.sin_family = AF_INET;
-	serverSend.sin_port = htons( 8889 );
-
-	//Connect to remote server
-	if (connect(sockSend , (struct sockaddr *)&serverSend , sizeof(serverSend)) < 0)
-	{
-		perror("connect failed to Send. Error");
+		perror("Could not create socketReceive");
 		exit(1);
-	}
-	
-	puts("Connected to Send\n");
-	
-	sockReceive = socket(AF_INET , SOCK_STREAM , 0);
-	if (sockReceive == -1)
-	{
-		printf("Could not create socketReceive");
 	}
 	puts("SocketReceive created");
 	
-	serverReceive.sin_addr.s_addr = inet_addr("192.168.2.60");
+	// Lier l'adresse locale au socket
+	memset(&serverReceive, 0, sizeof(serverReceive));
+	serverReceive.sin_addr.s_addr = htonl(INADDR_ANY);
 	serverReceive.sin_family = AF_INET;
-	serverReceive.sin_port = htons( 8888 );
+	serverReceive.sin_port = htons( SERV_PORT );
 
 	//Connect to remote server
-	if (connect(sockReceive , (struct sockaddr *)&serverReceive , sizeof(serverReceive)) < 0)
+	if ((connect(sockReceive , (struct sockaddr *)&serverReceive , sizeof(serverReceive))) != 0)
 	{
 		perror("connect failed to Receive. Error");
 		exit(1);
 	}
-	
 	puts("Connected to Receive\n");
 }
 
-void Sendmessage(char* format){
-		char message[25];
-		//Send some data
-		sprintf(message, "%s\n", format);
-
-		if( send(sockSend , message , strlen(message) , 0) < 0)
-		{
-			puts("Send failed");
-			exit(1);
-		}
-}
-void Receivemessage()
+char* ReceiveMessage()
 {
-	char server_reply[20];
-	if( recv(sockReceive , server_reply , 20 , 0) < 0)
-		{
-			puts("recv failed");
-			exit(1);
-		}
-	puts("Server reply :");
-	puts(server_reply);
-	
+	char* buffer = malloc(TAILLE_MESSAGE);
+	if( recv(sockReceive , buffer , TAILLE_MESSAGE , 0) < 0)
+	{
+		perror("recv failed");
+		exit(1);
+	}	
+	return buffer;
 }
 
-void Deconnection(){
-	close(sockSend);
+void FermerServeur(){
 	close(sockReceive);
 }
