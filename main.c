@@ -31,6 +31,7 @@ struct Gaz* newGaz(int index) {
     struct Gaz* gaz = malloc(sizeof(struct Gaz));
     gaz->indice = index;
     gaz->value = malloc(sizeof(int));
+    gaz->period = 1;
     return gaz;
 }
 
@@ -40,20 +41,21 @@ void freeGaz(struct Gaz* gaz) {
 }
 
 void* ecoute(void* arg) {
-    struct Gaz* gaz = *(struct Gaz**) arg;
+    struct Gaz* gaz_1 = *((struct Gaz**) arg);
+    struct Gaz* gaz_2 = *((struct Gaz**) arg + 1);
+    struct Gaz* gaz_3 = *((struct Gaz**) arg + 2);
     while(1) {
         char* message = ReceiveMessage();
-        printf("%s\n", message);
         switch (*(message+2))
         {
         case '1':
-            sscanf(message, "%*[A-Z]1%d\n", gaz[0].value);
+            sscanf(message, "LG1%d\n", gaz_1->value);
             break;
         case '2':
-            sscanf(message, "%*[A-Z]2%d\n", gaz[1].value);
+            sscanf(message, "LG2%d\n", gaz_2->value);
             break;
         case '3':
-            sscanf(message, "%*[A-Z]3%d\n", gaz[2].value);
+            sscanf(message, "LG3%d\n", gaz_3->value);
             break;
         }
         free(message);
@@ -63,23 +65,20 @@ void* ecoute(void* arg) {
 void * leds(void* arg) {
 }
 
-void * controle(void* args) {
+void * controle(void* arg) {
     // Effectue le contrôle d'un gaz
-    /*struct gaz data = *(struct gaz*) args;
+    /*struct Gaz gaz = *(struct Gaz*) arg;
     while(1) {
-        sem_wait(&verrou_gaz[data.indice]);
-        double value = *(data.value);
-        pthread_mutex_lock(&mutex_alerte[data.indice]);
-        if (value < ALERTE_B) data.alerte = 0;
-        else if (value < ALERTE_M) data.alerte = 1;
-        else if (value < ALERTE_H) data.alerte = 2;
+        int taux = *(gaz.value);
+        if (taux < ALERTE_B) gaz.alerte = 0;
+        else if (taux < ALERTE_M) gaz.alerte = 1;
+        else if (taux < ALERTE_H) gaz.alerte = 2;
         else {
-            if (value >=  INJECTION) data.injection = 1; //Lancer injection gaz
-            data.alerte = 3;
+            if (taux >=  INJECTION) gaz.injection = 1; //Lancer injection gaz
+            gaz.alerte = 3;
         }
-        pthread_mutex_unlock(&mutex_alerte[data.indice]);
-        sem_post(&verrou_gaz[data.indice]);
-    }*/
+    }
+    */
 }
 
 // Je pense qu'il faut fusionner aeration et ventilation, parce qu'ils sont interdépendants
@@ -113,9 +112,9 @@ int main(int argc, char** argv) {
     void* restrict args[NUM_THREADS] = {
         args_action,
         args_action,
+        args_action[0],
         args_action[1],
         args_action[2],
-        args_action[3],
         args_action
     };
 
@@ -125,7 +124,7 @@ int main(int argc, char** argv) {
     /* On effectue la création des threads/tâches */
 
     for (int i=0; i<NUM_THREADS; i++) {
-        if (pthread_create(&thread[i], NULL, functions[i], args[i]) != 0) {
+        if (pthread_create(&thread[i], NULL, functions[i], (void *)args[i]) != 0) {
             perror("pthreac_create() :");
             exit(1);
         }
