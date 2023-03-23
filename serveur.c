@@ -24,7 +24,7 @@ void OuvrirServeur(){
 	
 	// Lier l'adresse locale au socket
 	memset(&serverReceive, 0, sizeof(serverReceive));
-	serverReceive.sin_addr.s_addr = htonl("192.168.2.60");
+	serverReceive.sin_addr.s_addr = inet_addr("192.168.2.60");
 	serverReceive.sin_family = AF_INET;
 	serverReceive.sin_port = htons( SERV_PORT );
 
