@@ -19,27 +19,41 @@
 sem_t verrou_gaz[3]; // Pour synchroniser la réception d'une valeur pour un gaz avec son contrôle
 pthread_mutex_t mutex_alerte[3] = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER};
 
-typedef struct gaz {
+typedef struct Gaz {
     int indice;
     int* value;
     int alerte;
     int injection;
     int period;
-} gaz;
+} Gaz;
+
+struct Gaz* newGaz(int index) {
+    struct Gaz* gaz = malloc(sizeof(struct Gaz));
+    gaz->indice = index;
+    gaz->value = malloc(sizeof(int));
+    return gaz;
+}
+
+void freeGaz(struct Gaz* gaz) {
+    free(gaz->value);
+    free(gaz);
+}
 
 void* ecoute(void* arg) {
+    struct Gaz* gaz = *(struct Gaz**) arg;
     while(1) {
         char* message = ReceiveMessage();
-        printf("%s", message);
-        switch (atoi(message[2]))
+        printf("%s\n", message);
+        switch (*(message+2))
         {
-        case 1:
-            /* On met dans le gaz 1 */
+        case '1':
+            sscanf(message, "%*[A-Z]1%d\n", gaz[0].value);
             break;
-        case 2:
-            /* On met dans le gaz 2 */
-        case 3:
-            /* On met dans le gaz 3 */
+        case '2':
+            sscanf(message, "%*[A-Z]2%d\n", gaz[1].value);
+            break;
+        case '3':
+            sscanf(message, "%*[A-Z]3%d\n", gaz[2].value);
             break;
         }
         free(message);
@@ -78,15 +92,6 @@ void * action(void* args){
     //}
 }
 
-struct gaz* newGaz(int index) {
-    struct gaz* gaz = malloc(sizeof(struct gaz));
-    gaz->indice = index;
-    gaz->value = malloc(sizeof(double));
-    gaz->alerte = 0;
-    gaz->injection = 0;
-    return gaz;
-}
-
 int main(int argc, char** argv) {
 
     for (int i=0;i++;i<3) sem_init(&verrou_gaz[i], 0, 1);
@@ -103,11 +108,7 @@ int main(int argc, char** argv) {
     struct sched_param sched[NUM_THREADS];
     int sched_policy[NUM_THREADS] = {SCHED_FIFO, SCHED_FIFO, SCHED_RR, SCHED_RR, SCHED_RR, SCHED_FIFO};
 
-
-    struct gaz** args_action = malloc(3*sizeof(struct gaz*));
-    for (int i=0; i++; i<3) {
-        args_action[i] = newGaz(i);
-    }
+    struct Gaz* args_action[3] = {newGaz(1), newGaz(2), newGaz(3)};
 
     void* restrict args[NUM_THREADS] = {
         args_action,
