@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
     struct sched_param sched[NUM_THREADS];
     int sched_policy[NUM_THREADS] = {SCHED_FIFO, SCHED_FIFO, SCHED_RR, SCHED_RR, SCHED_RR, SCHED_FIFO};
 
-    struct Gaz* args_action[3] = {newGaz(1), newGaz(2), newGaz(3)};
+    struct Gaz* args_action[3] = {newGaz(0), newGaz(1), newGaz(2)};
 
     void* restrict args[NUM_THREADS] = {
         args_action,
