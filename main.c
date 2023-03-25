@@ -32,13 +32,14 @@ void* ecoute(void* arg) {
         char* message = ReceiveMessage();
         printf("%s", message);
 		int length = strlen(message);
-		char tmp; 
+		char tmp[3]; 
         strncpy(tmp, message, 2);
-        //tmp[2] = '\0';
+        tmp[2] = '\0';
 		printf("length:%d tmp:%s \n",length,tmp);
     
 		if ((length == 6 || length == 7)&& tmp=="LG") {
-        
+		printf("hello\n");
+
 		char Cvaleur[length - 2]; 
         strncpy(Cvaleur, message + 3, length - 3);
         Cvaleur[length - 3] = '\0';
