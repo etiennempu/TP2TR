@@ -31,16 +31,16 @@ void* ecoute(void* arg) {
     while(1) {
         char* message = ReceiveMessage();
         printf("%s", message);
-		int length = strlen(&message);
+		int length = strlen(message);
 		char tmp[3]; 
-        strncpy(tmp, &message, 2);
+        strncpy(tmp, message, 2);
         tmp[2] = '\0';
 
     // Vérifiez si la chaîne a au moins 3 caractères
 		if ((length == 4 || length == 5)&& tmp=="LG") {
         char Cvaleur[length - 2]; 
-        strncpy(Cvaleur, &message + 3, length - 3);
-        remaining_chars[length - 3] = '\0';
+        strncpy(Cvaleur, message + 3, length - 3);
+        Cvaleur[length - 3] = '\0';
 		int valeur = atoi(Cvaleur);
 		
 		if(valeur < 30){
@@ -57,6 +57,7 @@ void* ecoute(void* arg) {
 			
 			LedUpdate(atoi(&message[2])+2);
 			
+		}
 		}
 			
 		/*switch (atoi(&message[2]))

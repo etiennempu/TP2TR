@@ -118,7 +118,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G2[i]) = CREEN;
+			*(p + G2[i]) = GREEN;
 			
 		}
 		
