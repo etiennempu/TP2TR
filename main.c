@@ -37,7 +37,7 @@ void* ecoute(void* arg) {
         tmp[2] = '\0';
 		printf("length:%d tmp:%s \n",length,tmp);
     
-		if ((length == 6 || length == 7)&& tmp=="LG") {
+		if ((length == 6 || length == 7)&& tmp=="LG\0") {
 		printf("hello\n");
 
 		char Cvaleur[length - 2]; 
