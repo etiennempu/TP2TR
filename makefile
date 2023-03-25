@@ -5,7 +5,7 @@ EXEC=main
 all: $(EXEC)
 
 main : main.o
-	$(CXX) -pthread -o main main.o serveur.o client.o $(CXXFLAGS)
+	$(CXX) -pthread -o main main.o serveur.o client.o Led.o $(CXXFLAGS)
 
 main.o : serveur.o client.o main.c
 	$(CXX) -c main.c
@@ -15,6 +15,9 @@ serveur.o : serveur.c
 
 client.o : client.c
 	$(CXX) -c client.c
+	
+		: Led.c
+	$(CXX) -Wall -O2 Led.c
 
 clean:
-	rm client.o serveur.o main.o main
+	rm client.o serveur.o Led.o main.o main
