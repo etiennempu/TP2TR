@@ -43,11 +43,12 @@ void LedUpdate(int index) {
 	int G2[16]={3,4,11,12,19,20,27,28,35,36,43,44,51,52,59,60};
 	int G3[16]={6,7,14,15,22,23,30,31,38,39,46,47,54,55,62,63};
     uint16_t *p;
+	struct fb_fix_screeninfo fix_info;
+
     
 	switch(index){
 		
 	case 0:
-		struct fb_fix_screeninfo fix_info;
 		
 		
 		/* open the led frame buffer device */
