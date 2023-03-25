@@ -7,7 +7,7 @@ all: $(EXEC)
 main : main.o
         $(CXX) -pthread -o main main.o serveur.o client.o Led.o $(CXXFLAGS)
 
-main.o : Led.o serveur.o client.o main.c
+main.o : serveur.o client.o Led.o main.c
         $(CXX) -c main.c
 
 serveur.o : serveur.c
@@ -21,4 +21,3 @@ Led.o : Led.c
 
 clean:
         rm client.o serveur.o Led.o main.o main
-

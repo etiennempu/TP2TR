@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define FILEPATH "/dev/fb1"
+#define FILEPATH "/dev/fb0"
 #define NUM_WORDS 64
 #define FILESIZE (NUM_WORDS * sizeof(uint16_t))
 
@@ -32,10 +32,14 @@
 #define YELLOW 0xFFE0
 
 void delay(int);
+void clear();
 
 void LedUpdate(int index) {
     int i;
     int fbfd;
+	int G1[16]={0,1,8,9,16,17,24,25,32,33,40,41,48,49,56,57}
+	int G2[16]={3,4,11,12,19,20,27,28,35,36,43,44,51,52,59,60}
+	int G3[16]={6,7,14,15,22,23,30,31,38,39,46,47,54,55,62,63}
     uint16_t *map;
     uint16_t *p;
     struct fb_fix_screeninfo fix_info;
@@ -75,22 +79,25 @@ void LedUpdate(int index) {
 
     /* clear the led matrix */
     memset(map, 0, FILESIZE);
-
+	
     /* light it up! */
-    for (i = 0; i < 8; i++) {
-        *(p + i) = RED;
-        delay(25);
+    for (i = 0; i < 16; i++) {
+        *(p + G1[i]) = RED;
+        
     }
-	for (i = 8; i < 16; i++) {
-        *(p + i) = GREEN;
-        delay(25);
+	for (i = 0; i < 16; i++) {
+        *(p + G2[i]) = GREEN;
+        
     }
-	for (i = 16; i < 24; i++) {
-        *(p + i) = YELLOW;
-        delay(25);
+	for (i = 0; i < 16; i++) {
+        *(p + G3[i]) = YELLOW;
+        
     }
 
     
+
+}
+void clear(){
     /* clear the led matrix */
     memset(map, 0, FILESIZE);
 
@@ -99,8 +106,4 @@ void LedUpdate(int index) {
         perror("Error un-mmapping the file");
     }
     close(fbfd);
-}
-
-void delay(int t) {
-    usleep(t * 1000);
 }
