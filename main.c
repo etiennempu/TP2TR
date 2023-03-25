@@ -35,9 +35,9 @@ void* ecoute(void* arg) {
 		char tmp[3]; 
         strncpy(tmp, message, 2);
         tmp[2] = '\0';
-		printf("length:%d tmp:%s \n",length,tmp);
+		//printf("length:%d tmp:%s \n",length,tmp);
     // Vérifiez si la chaîne a au moins 3 caractères
-		if ((length == 4 || length == 5)&& tmp=="LG") {
+		if ((length == 6 || length == 7)&& tmp=="LG") {
         char Cvaleur[length - 2]; 
         strncpy(Cvaleur, message + 3, length - 3);
         Cvaleur[length - 3] = '\0';
