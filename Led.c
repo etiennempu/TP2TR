@@ -43,57 +43,168 @@ void LedUpdate(int index) {
 	int G2[16]={3,4,11,12,19,20,27,28,35,36,43,44,51,52,59,60};
 	int G3[16]={6,7,14,15,22,23,30,31,38,39,46,47,54,55,62,63};
     uint16_t *p;
-    struct fb_fix_screeninfo fix_info;
+    
+	switch(index){
+		
+	case 0:
+		struct fb_fix_screeninfo fix_info;
+		
+		
+		/* open the led frame buffer device */
+		fbfd = open(FILEPATH, O_RDWR);
+		if (fbfd == -1) {
+			perror("Error (call to 'open')");
+			exit(EXIT_FAILURE);
+		}
 
-    /* open the led frame buffer device */
-    fbfd = open(FILEPATH, O_RDWR);
-    if (fbfd == -1) {
-        perror("Error (call to 'open')");
-        exit(EXIT_FAILURE);
-    }
+		/* read fixed screen info for the open device */
+		if (ioctl(fbfd, FBIOGET_FSCREENINFO, &fix_info) == -1) {
+			perror("Error (call to 'ioctl')");
+			close(fbfd);
+			exit(EXIT_FAILURE);
+		}
 
-    /* read fixed screen info for the open device */
-    if (ioctl(fbfd, FBIOGET_FSCREENINFO, &fix_info) == -1) {
-        perror("Error (call to 'ioctl')");
-        close(fbfd);
-        exit(EXIT_FAILURE);
-    }
+		/* now check the correct device has been found */
+		if (strcmp(fix_info.id, "RPi-Sense FB") != 0) {
+			printf("%s\n", "Error: RPi-Sense FB not found");
+			close(fbfd);
+			exit(EXIT_FAILURE);
+		}
 
-    /* now check the correct device has been found */
-    if (strcmp(fix_info.id, "RPi-Sense FB") != 0) {
-        printf("%s\n", "Error: RPi-Sense FB not found");
-        close(fbfd);
-        exit(EXIT_FAILURE);
-    }
+		/* map the led frame buffer device into memory */
+		map =
+			mmap(NULL, FILESIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0);
+		if (map == MAP_FAILED) {
+			close(fbfd);
+			perror("Error mmapping the file");
+			exit(EXIT_FAILURE);
+		}
 
-    /* map the led frame buffer device into memory */
-    map =
-        mmap(NULL, FILESIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0);
-    if (map == MAP_FAILED) {
-        close(fbfd);
-        perror("Error mmapping the file");
-        exit(EXIT_FAILURE);
-    }
+		/* set a pointer to the start of the memory area */
+		p = map;
 
-    /* set a pointer to the start of the memory area */
-    p = map;
-
-    /* clear the led matrix */
-    memset(map, 0, FILESIZE);
+		/* clear the led matrix */
+		memset(map, 0, FILESIZE);
+		
+		/* light it up! */
+		for (i = 0; i < 16; i++) {
+			*(p + G1[i]) = GREEN;
+			
+		}
+		for (i = 0; i < 16; i++) {
+			*(p + G2[i]) = GREEN;
+			
+		}
+		for (i = 0; i < 16; i++) {
+			*(p + G3[i]) = GREEN;
+			
+		}
+		
+		break;
+	case 1 :
 	
-    /* light it up! */
-    for (i = 0; i < 16; i++) {
-        *(p + G1[i]) = RED;
-        
-    }
-	for (i = 0; i < 16; i++) {
-        *(p + G2[i]) = GREEN;
-        
-    }
-	for (i = 0; i < 16; i++) {
-        *(p + G3[i]) = YELLOW;
-        
-    }
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
+			*(p + G1[i]) = GREEN;
+			
+		}
+		
+		break;
+		
+	case 2 :
+	
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
+			*(p + G1[i]) = YELLOW;
+			
+		}
+		
+		break;
+	
+	case 3 :
+	
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
+			*(p + G1[i]) = RED;
+			
+		}
+		
+		break;
+	case 4 :
+	
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
+			*(p + G2[i]) = GREEN;
+			
+		}
+		
+		break;
+		
+	case 5 :
+	
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
+			*(p + G2[i]) = YELLOW;
+			
+		}
+		
+		break;
+	
+	case 6 :
+	
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
+			*(p + G2[i]) = RED;
+			
+		}
+		
+		break;
+	case 7 :
+	
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
+			*(p + G3[i]) = GREEN;
+			
+		}
+		
+		break;
+		
+	case 8 :
+	
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
+			*(p + G3[i]) = YELLOW;
+			
+		}
+		
+		break;
+	
+	case 9 :
+	
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
+			*(p + G3[i]) = RED;
+			
+		}
+		
+		break;
+		
+	case 10 :
+		
+		clear();
+		
+		break;
+	
+	}
 
     
 

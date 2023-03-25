@@ -118,7 +118,28 @@ int main(int argc, char** argv) {
         args_action
     };
 	
+	
 	LedUpdate(0);
+	delay(2);
+	LedUpdate(1);
+	delay(2);
+	LedUpdate(2);
+	delay(2);
+	LedUpdate(3);
+	delay(2);
+	LedUpdate(4);
+	delay(2);
+	LedUpdate(5);
+	delay(2);
+	LedUpdate(6);
+	delay(2);
+	LedUpdate(7);
+	delay(2);
+	LedUpdate(8);
+	delay(2);
+	LedUpdate(9);
+	delay(2);
+	LedUpdate(10);
     OuvrirServeur();
     OuvrirClient();
 
