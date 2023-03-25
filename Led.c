@@ -33,7 +33,7 @@
 
 void delay(int);
 
-int main(void) {
+Void LedUpdate(int index) {
     int i;
     int fbfd;
     uint16_t *map;
