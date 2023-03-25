@@ -33,7 +33,7 @@
 
 void delay(int);
 
-Void LedUpdate(int index) {
+void LedUpdate(int index) {
     int i;
     int fbfd;
     uint16_t *map;
@@ -99,8 +99,6 @@ Void LedUpdate(int index) {
         perror("Error un-mmapping the file");
     }
     close(fbfd);
-
-    return 0;
 }
 
 void delay(int t) {

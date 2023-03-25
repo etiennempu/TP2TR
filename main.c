@@ -117,7 +117,8 @@ int main(int argc, char** argv) {
         args_action[3],
         args_action
     };
-
+	
+	LedUpdate(0);
     OuvrirServeur();
     OuvrirClient();
 
