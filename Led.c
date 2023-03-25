@@ -118,7 +118,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G1[i]) = YELLOW;
+			*(p + G2[i]) = CREEN;
 			
 		}
 		
@@ -129,7 +129,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G1[i]) = RED;
+			*(p + G3[i]) = GREEN;
 			
 		}
 		
@@ -139,7 +139,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G2[i]) = GREEN;
+			*(p + G1[i]) = YELLOW;
 			
 		}
 		
@@ -161,7 +161,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G2[i]) = RED;
+			*(p + G3[i]) = YELLOW;
 			
 		}
 		
@@ -171,7 +171,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G3[i]) = GREEN;
+			*(p + G1[i]) = RED;
 			
 		}
 		
@@ -182,7 +182,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G3[i]) = YELLOW;
+			*(p + G2[i]) = RED;
 			
 		}
 		
