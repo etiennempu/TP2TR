@@ -21,7 +21,7 @@ pthread_mutex_t mutex_alerte[3] = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INIT
 
 typedef struct gaz {
     int indice;
-    int* value;
+    double value;
     int alerte;
     int injection;
     int period;
@@ -47,35 +47,48 @@ void* ecoute(void* arg) {
 }
 
 void * leds(void* arg) {
+    // TODO: Implement this function
 }
 
 void * controle(void* args) {
-    // Effectue le contrôle d'un gaz
-    /*struct gaz data = *(struct gaz*) args;
+    struct gaz* data = (struct gaz*) args;
     while(1) {
-        sem_wait(&verrou_gaz[data.indice]);
-        double value = *(data.value);
-        pthread_mutex_lock(&mutex_alerte[data.indice]);
-        if (value < ALERTE_B) data.alerte = 0;
-        else if (value < ALERTE_M) data.alerte = 1;
-        else if (value < ALERTE_H) data.alerte = 2;
+        sem_wait(&verrou_gaz[data->indice]);
+        double value = data->value;
+        pthread_mutex_lock(&mutex_alerte[data->indice]);
+        if (value < ALERTE_B) data->alerte = 0;
+        else if (value < ALERTE_M) data->alerte = 1;
+        else if (value < ALERTE_H) data->alerte = 2;
         else {
-            if (value >=  INJECTION) data.injection = 1; //Lancer injection gaz
-            data.alerte = 3;
+            if (value >=  INJECTION) data->injection = 1; //Lancer injection gaz
+            data->alerte = 3;
         }
-        pthread_mutex_unlock(&mutex_alerte[data.indice]);
-        sem_post(&verrou_gaz[data.indice]);
-    }*/
+        pthread_mutex_unlock(&mutex_alerte[data->indice]);
+        sem_post(&verrou_gaz[data->indice]);
+        usleep(data->period);
+    }
 }
 
-// Je pense qu'il faut fusionner aeration et ventilation, parce qu'ils sont interdépendants
-
 void * action(void* args){
-    //args est une liste de struct gaz
-    //while (1) {
-        //Mise à jour des actions toutes les secondes ou autres*
-    //    sleep(1);
-    //}
+    struct gaz** data = (struct gaz**) args;
+    while (1) {
+        int alerte_total = 0;
+        for (int i = 0; i < 3; i++) {
+            pthread_mutex_lock(&mutex_alerte[i]);
+            alerte_total += data[i]->alerte;
+            pthread_mutex_unlock(&mutex_alerte[i]);
+        }
+        if (alerte_total >= 5) {
+            SendMessage("ALERTE ROUGE\n");
+        } else if (alerte_total >= 3) {
+            SendMessage("ALERTE ORANGE\n");
+        } else if (alerte_total >= 1) {
+            SendMessage("ALERTE JAUNE\n");
+        } else {
+            SendMessage("TOUT VA BIEN\n");
+        }
+        sleep(5);
+    }
 }
 
 struct gaz* newGaz(int index) {
@@ -85,6 +98,41 @@ struct gaz* newGaz(int index) {
     gaz->alerte = 0;
     gaz->injection = 0;
     return gaz;
+}
+
+// Fonction qui calcule le coût en fonction des actions prises et de leurs niveaux de graduation
+int calcul_cout(int* actions, int taille_actions) {
+    int cout = 0;
+    int i;
+    for (i = 0; i < taille_actions; i++) {
+        switch (actions[i]) {
+            case 1: // Aération niveau 1
+                cout += 1;
+                break;
+            case 2: // Aération niveau 2
+                cout += 2;
+                break;
+            case 3: // Aération niveau 3
+                cout += 3;
+                break;
+            case 4: // Ventilation niveau 1
+                cout += 6;
+                break;
+            case 5: // Ventilation niveau 2
+                cout += 9;
+                break;
+            case 6: // Injection de gaz
+                cout += 20;
+                break;
+            case 7: // Commande d'annulation
+                cout += 0;
+                break;
+            default:
+                printf("Action invalide");
+                return -1;
+        }
+    }
+    return cout;
 }
 
 int main(int argc, char** argv) {
