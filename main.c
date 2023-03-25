@@ -32,13 +32,14 @@ void* ecoute(void* arg) {
         char* message = ReceiveMessage();
         printf("%s", message);
 		int length = strlen(message);
-		char tmp[3]; 
+		char tmp; 
         strncpy(tmp, message, 2);
-        tmp[2] = '\0';
-		//printf("length:%d tmp:%s \n",length,tmp);
-    // Vérifiez si la chaîne a au moins 3 caractères
+        //tmp[2] = '\0';
+		printf("length:%d tmp:%s \n",length,tmp);
+    
 		if ((length == 6 || length == 7)&& tmp=="LG") {
-        char Cvaleur[length - 2]; 
+        
+		char Cvaleur[length - 2]; 
         strncpy(Cvaleur, message + 3, length - 3);
         Cvaleur[length - 3] = '\0';
 		int valeur = atoi(Cvaleur);
