@@ -1,7 +1,7 @@
 #ifndef Led
 #define Led
 
-Void LedUpdate(int index);
+void LedUpdate(int index);
 
 
 #endif
