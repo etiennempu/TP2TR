@@ -31,17 +31,45 @@ void* ecoute(void* arg) {
     while(1) {
         char* message = ReceiveMessage();
         printf("%s", message);
-        switch (atoi(&message[2]))
+		int length = strlen(&message);
+		char tmp[3]; 
+        strncpy(tmp, &message, 2);
+        tmp[2] = '\0';
+
+    // Vérifiez si la chaîne a au moins 3 caractères
+		if ((length == 4 || length == 5)&& tmp=="LG") {
+        char Cvaleur[length - 2]; 
+        strncpy(Cvaleur, &message + 3, length - 3);
+        remaining_chars[length - 3] = '\0';
+		int valeur = atoi(Cvaleur);
+		
+		if(valeur < 30){
+			
+			LedUpdate(atoi(&message[2]));
+		
+		}
+		else if( 30 <= valeur < 60){
+			
+			LedUpdate(atoi(&message[2])+1);
+			
+		}
+		else{
+			
+			LedUpdate(atoi(&message[2])+2);
+			
+		}
+			
+		/*switch (atoi(&message[2]))
         {
         case 1:
-            /* On met dans le gaz 1 */
+            // On met dans le gaz 1 
             break;
         case 2:
-            /* On met dans le gaz 2 */
+            // On met dans le gaz 2 
         case 3:
-            /* On met dans le gaz 3 */
+            // On met dans le gaz 3 
             break;
-        }
+        }*/
         free(message);
     }
 }
@@ -120,7 +148,7 @@ int main(int argc, char** argv) {
 	
 	
 	LedUpdate(0);
-	sleep(2);
+	/*sleep(2);
 	LedUpdate(1);
 	sleep(2);
 	LedUpdate(2);
@@ -139,7 +167,7 @@ int main(int argc, char** argv) {
 	sleep(2);
 	LedUpdate(9);
 	sleep(2);
-	LedUpdate(10);
+	LedUpdate(10);*/
     OuvrirServeur();
     OuvrirClient();
 
