@@ -32,6 +32,8 @@
 #define YELLOW 0xFFE0
 
 int fbfd;
+uint16_t *map;
+
 
 void clear();
 
@@ -40,7 +42,6 @@ void LedUpdate(int index) {
 	int G1[16]={0,1,8,9,16,17,24,25,32,33,40,41,48,49,56,57};
 	int G2[16]={3,4,11,12,19,20,27,28,35,36,43,44,51,52,59,60};
 	int G3[16]={6,7,14,15,22,23,30,31,38,39,46,47,54,55,62,63};
-    uint16_t *map;
     uint16_t *p;
     struct fb_fix_screeninfo fix_info;
 
