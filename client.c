@@ -28,13 +28,10 @@ void OuvrirClient() {
 	serverSend.sin_family = AF_INET;
 	serverSend.sin_port = htons( CLIENT_PORT );
 
-    //Connect to remote server
-	if ((connect(sockSend , (struct sockaddr *)&serverSend , sizeof(serverSend))) != 0)
-	{
-		perror("connect failed to Send. Error");
-		exit(1);
-	}
-	puts("Connected to Send\n");
+}
+
+void AttenteOuvertureClient() {
+	while ((connect(sockSend , (struct sockaddr *)&serverSend , sizeof(serverSend))) == -1) ;
 }
 
 void SendMessage(char* format){
