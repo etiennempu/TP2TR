@@ -31,7 +31,7 @@
 
 int run = 1; // Indiquer l'arrêt des tâches
 sem_t verrou_controle[NUM_GAZ]; // Synchroniser les tâches "contrôle" avec l'écoute
-pthread_mutex_t mutex_alerte[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
+pthread_mutex_t mutex_alerte[3] = { PTHREAD_MUTEX_INITIALIZER };
 
 void* ecoute(void* args) {
     struct Gaz** gaz = (struct Gaz**) args;
@@ -83,6 +83,7 @@ void * controle(void* arg) {
         sem_wait(&verrou_controle[gaz.indice]);
         int taux = *(gaz.value);
         if (taux != tmp) {
+            pthread_mutex_lock(&mutex_alerte[gaz.indice]);
             if (taux < ALERTE_B) {
                 *(gaz.alerte) = 0;
                 c = "";
@@ -100,7 +101,8 @@ void * controle(void* arg) {
                 c = "H";
             }
             else *(gaz.alerte) = 4;
-            
+            pthread_mutex_unlock(&mutex_alerte[gaz.indice]);
+
             if (*(gaz.alerte) != old_alerte) {
                 sprintf(message, "AG%d", gaz.indice+1);
                 strcat(message, c);
@@ -176,8 +178,11 @@ void * air(void* args){
     while (run) {
         sleep(1);
         //Mise à jour des actions toutes les secondes ou autres
-        if (alerte_max((struct Gaz**) args, NUM_GAZ) < 3) {
-            reaction(aug_max((struct Gaz**) args, NUM_GAZ), niveau, alerte_max((struct Gaz**) args, NUM_GAZ));
+        for (int i=0; i<NUM_GAZ; i++) pthread_mutex_lock(&mutex_alerte[i]);
+        int a_max = alerte_max((struct Gaz**) args, NUM_GAZ);
+        for (int i=0; i<NUM_GAZ; i++) pthread_mutex_unlock(&mutex_alerte[i]);
+        if (a_max < 3) {
+            reaction(aug_max((struct Gaz**) args, NUM_GAZ), niveau, a_max);
         }
         else {
             reaction_max(niveau);
