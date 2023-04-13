@@ -266,4 +266,5 @@ int main(int argc, char** argv) {
     }
     free(thread);
 
+    exit(0);
 }
