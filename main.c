@@ -5,179 +5,286 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "gaz.h"
 #include "serveur.h"
 #include "client.h"
+
 #include "Led.h"
 
-#define NUM_THREADS 6
+#include "utils.h"
 
-#define ALERTE_B 5
-#define ALERTE_M 15
-#define ALERTE_H 30
-#define INJECTION 60
 
-sem_t verrou_gaz[3]; // Pour synchroniser la réception d'une valeur pour un gaz avec son contrôle
-pthread_mutex_t mutex_alerte[3] = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER, PTHREAD_MUTEX_INITIALIZER};
+#define NUM_GAZ 3
+#define NUM_THREADS 3+NUM_GAZ
 
-typedef struct gaz {
-    int indice;
-    int* value;
-    int alerte;
-    int injection;
-    int period;
-} gaz;
+#define SCHED_HAUTE 3
+#define SCHED_MOYEN 2
+#define SCHED_BASSE 1
 
-void* ecoute(void* arg) {
-    while(1) {
-        char* message = ReceiveMessage();
-        printf("%s", message);
-		int length = strlen(message);
-		char tmp[3]; 
-        strncpy(tmp, message, 2);
-        tmp[2] = '\0';
-		printf("length:%d tmp:%s \n",length,tmp);
-    
-		if ((length == 6 || length == 7)&& tmp=="LG\0") {
-		printf("hello\n");
+// Définition des seuils d'alerte
 
-		char Cvaleur[length - 2]; 
-        strncpy(Cvaleur, message + 3, length - 3);
-        Cvaleur[length - 3] = '\0';
-		int valeur = atoi(Cvaleur);
-		printf("valeur:%d\n",valeur);
-		if(valeur < 30){
-			
-			LedUpdate(atoi(&message[2]));
-		
-		}
-		else if( 30 <= valeur < 60){
-			
-			LedUpdate(atoi(&message[2])+1);
-			
-		}
-		else{
-			
-			LedUpdate(atoi(&message[2])+2);
-			
-		}
-		}
-			
-		/*switch (atoi(&message[2]))
-        {
-        case 1:
-            // On met dans le gaz 1 
-            break;
-        case 2:
-            // On met dans le gaz 2 
-        case 3:
-            // On met dans le gaz 3 
-            break;
-        }*/
-        free(message);
+#define ALERTE_B 20
+#define ALERTE_M 40
+#define ALERTE_H 60
+#define INJECTION 80
+
+
+// Définition des seuils des fuites
+
+#define FUITE {0, 1, 3, 6, 7, 9, 11, 12, 14}
+
+// Définition des coûts des actions
+#define A1 1
+#define A2 2
+#define A3 3
+#define V1 6
+#define V2 9
+#define INJ 20
+
+int run = 1; // Indiquer l'arrêt des tâches (mot clé extern : pour que les fonctions de mesure présente dans d'autres fichiers y ai accès)
+sem_t verrou_controle[NUM_GAZ]; // Synchroniser les tâches "contrôle" avec l'écoute
+sem_t verrou_action; // Pour indiquer au thread action qu'un le statut d'un gaz a été modifié
+pthread_mutex_t mutex_alerte[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
+pthread_mutex_t mutex_valeur[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
+
+void* ecoute(void* args) {
+    struct Gaz** gaz = (struct Gaz**) args;
+
+    char* buffer;
+    /* Le système ne reçoit des messages que si le logiciel de simulation communique */
+    while(strcmp((buffer = ReceiveMessage()), "") != 0) {
+        char** cmds = parser(buffer, "\n");
+        char** shards;
+
+        while( cmds != NULL ) {
+            char c[1] = { *(*(cmds)+2) };
+            int i = atoi(c);
+            shards = parser(*(cmds), c);
+            int fuite = atoi(*(shards+1));
+            
+            pthread_mutex_lock(&mutex_valeur[i-1]);
+            majgaz(gaz[i-1], fuite);
+            pthread_mutex_unlock(&mutex_valeur[i-1]);
+
+            sem_post(&verrou_controle[i-1]);
+            cmds = loop_parser(cmds, "\n");
+            free(shards);
+        }
+
+        free(cmds);
+        free(buffer);
     }
+    free(buffer);
+    run = 0;
+    for (int i=0; i<3; i++) {
+        //Pour libérer les tâches de contrôle. Elles effectuent leur dernier tout de boucle puis elles sortent de la boucle.
+        sem_post(&verrou_controle[i]);
+    }
+    pthread_exit(0);
 }
 
 void * leds(void* arg) {
+    //Allumer les leds de la Sense Hat
 }
 
-void * controle(void* args) {
+void bis_inject() {
+
+}
+
+void * controle(void* arg) {
     // Effectue le contrôle d'un gaz
-    /*struct gaz data = *(struct gaz*) args;
-    while(1) {
-        sem_wait(&verrou_gaz[data.indice]);
-        double value = *(data.value);
-        pthread_mutex_lock(&mutex_alerte[data.indice]);
-        if (value < ALERTE_B) data.alerte = 0;
-        else if (value < ALERTE_M) data.alerte = 1;
-        else if (value < ALERTE_H) data.alerte = 2;
-        else {
-            if (value >=  INJECTION) data.injection = 1; //Lancer injection gaz
-            data.alerte = 3;
+    struct Gaz gaz = *(struct Gaz*) arg;
+
+    // Des variables locales pour ajuster les actions et éviter d'envoyer des messages inutiles.
+    int tmp = 0;
+    int old_alerte = 0;
+    int injection = 0;
+
+    char message[5+NUM_GAZ/10];
+    const char* c;
+    while(run) {
+        sem_wait(&verrou_controle[gaz.indice]);
+        int taux = *(gaz.value);
+        if (taux != tmp) {
+            pthread_mutex_lock(&mutex_alerte[gaz.indice]);
+            if (taux < ALERTE_B) {
+                *(gaz.alerte) = 0;
+                c = "";
+            }
+            else if (taux < ALERTE_M) {
+                *(gaz.alerte) = 1;
+                c = "L";
+            }
+            else if (taux < ALERTE_H) {
+                *(gaz.alerte) = 2;
+                c = "M";
+            }
+            else if (taux < INJECTION) {
+                *(gaz.alerte) = 3;
+                c = "H";
+            }
+            else *(gaz.alerte) = 4;
+            pthread_mutex_unlock(&mutex_alerte[gaz.indice]);
+
+
+            if (*(gaz.alerte) != old_alerte) {
+
+                // Si il faut lancer l'injection on le fait ici car c'est une action qui n'est pas commune à tous les gaz.
+                if (*gaz.alerte == 4 && !injection) {
+                    injection = 1;
+                    sprintf(message, "IG%d", gaz.indice+1);
+                    SendMessage(message);
+                    /* COUT
+                    cout_total += INJ;
+                    */
+                }
+                /* COUT
+                else if (*gaz.alerte == 4 && injection) {
+                    cout_total += INJ;
+                }
+                */
+                else if (*gaz.alerte != 4 && injection) {
+                    injection = 0;
+                    sprintf(message, "AIG%d", gaz.indice+1);
+                    SendMessage(message);
+                }
+
+                sprintf(message, "AG%d", gaz.indice+1);
+                strcat(message, c);
+                old_alerte = *(gaz.alerte);
+                SendMessage(message);
+            }
+            tmp = taux;
         }
-        pthread_mutex_unlock(&mutex_alerte[data.indice]);
-        sem_post(&verrou_gaz[data.indice]);
-    }*/
+        else {
+            pthread_mutex_lock(&mutex_valeur[gaz.indice]);
+            // Si pas de changement alors peut-être l'action ne fait que compenser donc augmentaion artificielle de la fuite pour pousser à faire une action plus forte
+            if (tmp != 0) gaz.aug++;
+            // Ou alors la fuite a déjà baissé et on est encore en train d'utiliser une action trop importante
+            else gaz.aug = (gaz.aug > 0) ? gaz.aug-- : 0;
+            pthread_mutex_unlock(&mutex_valeur[gaz.indice]);
+        }
+        sem_post(&verrou_action);
+    }
+    sem_post(&verrou_action);
+    pthread_exit(0);
 }
 
-// Je pense qu'il faut fusionner aeration et ventilation, parce qu'ils sont interdépendants
+void reaction(int pire_fuite, int* niveau, int alerte_max) {
+    int seuil_fuite[] = FUITE;
+    
+    // Ajustement ventilation
+    if (niveau[1] != alerte_max) {
+        switch (alerte_max)
+        {
+        case 0:
+            SendMessage("VN");
+            break;
+        case 1:
+            SendMessage("VL1");
+            break;
+        default:
+            SendMessage("VL2");
+        }
+        niveau[1] = (alerte_max <= 2) ? alerte_max : 2;
+    }
 
-void * action(void* args){
-    //args est une liste de struct gaz
-    //while (1) {
-        //Mise à jour des actions toutes les secondes ou autres*
-    //    sleep(1);
-    //}
+    // Ajustement aération
+    int s = 3 * alerte_max;
+    if (pire_fuite <= seuil_fuite[s] && niveau[0] != 0) {
+        SendMessage("AN");
+        niveau[0] = 0;
+    }
+    else if (pire_fuite <= seuil_fuite[s+1] && niveau[0] != 1) {
+        SendMessage("AL1");
+        niveau[0] = 1;
+    }
+    else if (pire_fuite <= seuil_fuite[s+2] && niveau[0] != 2) {
+        SendMessage("AL2");
+        niveau[0] = 2;
+    }
+    else if (niveau[0] != 3) {
+        SendMessage("AL3");
+        niveau[0] = 3;
+    }
 }
 
-struct gaz* newGaz(int index) {
-    struct gaz* gaz = malloc(sizeof(struct gaz));
-    gaz->indice = index;
-    gaz->value = malloc(sizeof(double));
-    gaz->alerte = 0;
-    gaz->injection = 0;
-    return gaz;
+void reaction_max(int* niveau) {
+    // La fuite est très grande toute les actions au maximum
+    if (niveau[0] != 3) {
+        SendMessage("AL3");
+        niveau[0] = 3;
+    }
+    if (niveau[1] != 2) {
+        SendMessage("VL2");
+        niveau[1] = 2;
+    }
+}
+
+void * air(void* args){
+    // Contrôle de l'aération et de la ventilation
+    int niveau[2] = { 0 };
+    while (run) {
+        for (int i=0; i<NUM_GAZ; i++) sem_wait(&verrou_action);
+        //Mise à jour des actions toutes les secondes ou autres
+
+        for (int i=0; i<NUM_GAZ; i++) pthread_mutex_lock(&mutex_alerte[i]);
+        int a_max = alerte_max((struct Gaz**) args, NUM_GAZ);
+        for (int i=0; i<NUM_GAZ; i++) pthread_mutex_unlock(&mutex_alerte[i]);
+
+        if (a_max < 3) {
+
+            for (int i=0; i<NUM_GAZ; i++) pthread_mutex_lock(&mutex_valeur[i]);
+            reaction(aug_max((struct Gaz**) args, NUM_GAZ), niveau, a_max);
+            for (int i=0; i<NUM_GAZ; i++) pthread_mutex_unlock(&mutex_valeur[i]);
+
+        }
+        else {
+            reaction_max(niveau);
+        }
+    }
+    pthread_exit(0);
 }
 
 int main(int argc, char** argv) {
 
-    for (int i=0;i++;i<3) sem_init(&verrou_gaz[i], 0, 1);
+    /* Initialisation des sémaphores */
+    for (int i=0;i++;i<3) {
+        sem_init(&verrou_controle[i], 0, 0);
+    }
+    sem_init(&verrou_action, 0, 0);
 
+    /* Préparation des paramètres pour la création des tâches */
     pthread_t* thread = calloc(NUM_THREADS, sizeof(pthread_t));
-    void * functions[NUM_THREADS] = {
-        ecoute,
-        leds,
-        controle,
-        controle,
-        controle,
-        action,
-    };
-    struct sched_param sched[NUM_THREADS];
-    int sched_policy[NUM_THREADS] = {SCHED_FIFO, SCHED_FIFO, SCHED_RR, SCHED_RR, SCHED_RR, SCHED_FIFO};
 
+    void * functions[NUM_THREADS] = {ecoute, [1 ... NUM_GAZ] = controle, air, leds};
+    struct sched_param sched[NUM_THREADS] = {[0 ... NUM_GAZ+1] = SCHED_HAUTE, SCHED_BASSE};
+    int sched_policy[NUM_THREADS] = {SCHED_FIFO, [1 ... NUM_GAZ] = SCHED_RR, [NUM_GAZ+1 ... NUM_THREADS-1] = SCHED_FIFO};
 
-    struct gaz** args_action = malloc(3*sizeof(struct gaz*));
-    for (int i=0; i++; i<3) {
+    struct Gaz* args_action[NUM_GAZ];
+    for (int i=0; i<NUM_GAZ; i++) {
         args_action[i] = newGaz(i);
     }
 
-    void* restrict args[NUM_THREADS] = {
-        args_action,
-        args_action,
-        args_action[1],
-        args_action[2],
-        args_action[3],
-        args_action
-    };
-	
-	
-	LedUpdate(0);
-	/*sleep(2);
-	LedUpdate(1);
-	sleep(2);
-	LedUpdate(2);
-	sleep(2);
-	LedUpdate(3);
-	sleep(2);
-	LedUpdate(4);
-	sleep(2);
-	LedUpdate(5);
-	sleep(2);
-	LedUpdate(6);
-	sleep(2);
-	LedUpdate(7);
-	sleep(2);
-	LedUpdate(8);
-	sleep(2);
-	LedUpdate(9);
-	sleep(2);
-	LedUpdate(10);*/
+
+    void* restrict args[NUM_THREADS] = { [NUM_GAZ+1 ... NUM_THREADS-1] = args_action };
+    args[0] = args_action;
+    for (int i=0; i<NUM_GAZ; i++) {
+        args[i+1] = args_action[i];
+    }
+
+    /* Création des sockets pour la communication */
+
     OuvrirServeur();
     OuvrirClient();
 
-    /* On effectue la création des threads/tâches */
+    /* Attendre le lancement de la simulation */
+    AttenteOuvertureServeur();
+    AttenteOuvertureClient();
 
+    /* On effectue la création des threads/tâches */
     for (int i=0; i<NUM_THREADS; i++) {
-        if (pthread_create(&thread[i], NULL, functions[i], args[i]) != 0) {
+        if (pthread_create(&thread[i], NULL, functions[i], (void *)args[i]) != 0) {
             perror("pthreac_create() :");
             exit(1);
         }
@@ -186,13 +293,19 @@ int main(int argc, char** argv) {
     }
 
     /* On attend la fin des threads/tâches */
-
     for (int j=0; j<NUM_THREADS; j++) {
         pthread_join(thread[j], NULL);
         printf("Sortie Thread %d\n", j);
     }
 
+    /* Fermeture des sockets */
     FermerServeur();
     FermerClient();
 
+    for (int i=0; i<NUM_GAZ; i++) {
+        freeGaz(args_action[i]);
+    }
+    free(thread);
+
+    exit(0);
 }

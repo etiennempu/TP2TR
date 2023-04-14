@@ -7,7 +7,7 @@
 
 #define SERV_PORT 1231
 
-#define TAILLE_MESSAGE 10
+#define TAILLE_MESSAGE 22 // Longueur maximum d'un message 7 (LG + identifiant : 1|2|3 + valeur : 00...100 + \n) * 3 messages + \0
 
 struct sockaddr_in serverReceive;
 int sockReceive;
@@ -27,24 +27,22 @@ void OuvrirServeur(){
 	serverReceive.sin_addr.s_addr = inet_addr("192.168.2.60");
 	serverReceive.sin_family = AF_INET;
 	serverReceive.sin_port = htons( SERV_PORT );
+	
+}
 
-	//Connect to remote server
-	if ((connect(sockReceive , (struct sockaddr *)&serverReceive , sizeof(serverReceive))) != 0)
-	{
-		perror("connect failed to Receive. Error");
-		exit(1);
-	}
-	puts("Connected to Receive\n");
+void AttenteOuvertureServeur() {
+	while ((connect(sockReceive , (struct sockaddr *)&serverReceive , sizeof(serverReceive))) == -1) ;
 }
 
 char* ReceiveMessage()
 {
-	char* buffer = malloc(TAILLE_MESSAGE);
+	char* buffer = calloc(TAILLE_MESSAGE, sizeof(char));
 	if( recv(sockReceive , buffer , TAILLE_MESSAGE , 0) < 0)
 	{
 		perror("recv failed");
 		exit(1);
-	}	
+	}
+
 	return buffer;
 }
 

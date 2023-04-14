@@ -1,23 +1,17 @@
 CXX=gcc
-CXXFLAGS= -Wall -O3
+CXXFLAGS= -Wall -pedantic -Og -fsanitize=address -pthread
 EXEC=main
 
 all: $(EXEC)
 
 main : main.o
-        $(CXX) -pthread -o main main.o serveur.o client.o Led.o $(CXXFLAGS)
+	$(CXX) $(CXXFLAGS) -o main main.o gaz.o serveur.o client.o utils.o
 
-main.o : serveur.o client.o Led.o main.c
-        $(CXX) -c main.c
+main.o : utilities main.c
+	$(CXX) -c main.c
 
-serveur.o : serveur.c
-        $(CXX) -c serveur.c
-
-client.o : client.c
-        $(CXX) -c client.c
-
-Led.o : Led.c
-        $(CXX) -c Led.c
+utilities : gaz.c serveur.c client.c utils.c
+	$(CXX) -c gaz.c serveur.c client.c utils.c
 
 clean:
-        rm client.o serveur.o Led.o main.o main
+	rm utils.o client.o serveur.o gaz.o main.o main
