@@ -12,7 +12,7 @@
 //#include "leds.h"
 
 #define NUM_GAZ 3
-#define NUM_THREADS 4+NUM_GAZ
+#define NUM_THREADS 3+NUM_GAZ
 
 #define SCHED_HAUTE 3
 #define SCHED_MOYEN 2
@@ -31,7 +31,9 @@
 
 int run = 1; // Indiquer l'arrêt des tâches
 sem_t verrou_controle[NUM_GAZ]; // Synchroniser les tâches "contrôle" avec l'écoute
-pthread_mutex_t mutex_alerte[3] = { PTHREAD_MUTEX_INITIALIZER };
+sem_t verrou_action; // Pour indiquer au thread action qu'un le statut d'un gaz a été modifié
+pthread_mutex_t mutex_alerte[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
+pthread_mutex_t mutex_valeur[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
 
 void* ecoute(void* args) {
     struct Gaz** gaz = (struct Gaz**) args;
@@ -47,7 +49,11 @@ void* ecoute(void* args) {
             int i = atoi(c);
             shards = parser(*(cmds), c);
             int fuite = atoi(*(shards+1));
+            
+            pthread_mutex_lock(&mutex_valeur[i-1]);
             majgaz(gaz[i-1], fuite);
+            pthread_mutex_unlock(&mutex_valeur[i-1]);
+
             sem_post(&verrou_controle[i-1]);
             cmds = loop_parser(cmds, "\n");
             free(shards);
@@ -69,6 +75,10 @@ void * leds(void* arg) {
     //Allumer les leds de la Sense Hat
 }
 
+void bis_inject() {
+
+}
+
 void * controle(void* arg) {
     // Effectue le contrôle d'un gaz
     struct Gaz gaz = *(struct Gaz*) arg;
@@ -76,6 +86,7 @@ void * controle(void* arg) {
     // Des variables locales pour ajuster les actions et éviter d'envoyer des messages inutiles.
     int tmp = 0;
     int old_alerte = 0;
+    int injection = 0;
 
     char message[5+NUM_GAZ/10];
     const char* c;
@@ -103,7 +114,21 @@ void * controle(void* arg) {
             else *(gaz.alerte) = 4;
             pthread_mutex_unlock(&mutex_alerte[gaz.indice]);
 
+
             if (*(gaz.alerte) != old_alerte) {
+
+                // Si il faut lancer l'injection on le fait ici car c'est une action qui n'est pas commune à tous les gaz.
+                if (*gaz.alerte == 4 && !injection) {
+                    injection = 1;
+                    sprintf(message, "IG%d", gaz.indice+1);
+                    SendMessage(message);
+                }
+                else if (injection) {
+                    injection = 0;
+                    sprintf(message, "AIG%d", gaz.indice+1);
+                    SendMessage(message);
+                }
+
                 sprintf(message, "AG%d", gaz.indice+1);
                 strcat(message, c);
                 old_alerte = *(gaz.alerte);
@@ -112,12 +137,16 @@ void * controle(void* arg) {
             tmp = taux;
         }
         else {
+            pthread_mutex_lock(&mutex_valeur[gaz.indice]);
             // Si pas de changement alors peut-être l'action ne fait que compenser donc augmentaion artificielle de la fuite pour pousser à faire une action plus forte
             if (tmp != 0) gaz.aug++;
             // Ou alors la fuite a déjà baissé et on est encore en train d'utiliser une action trop importante
             else gaz.aug = (gaz.aug > 0) ? gaz.aug-- : 0;
+            pthread_mutex_unlock(&mutex_valeur[gaz.indice]);
         }
+        sem_post(&verrou_action);
     }
+    sem_post(&verrou_action);
     pthread_exit(0);
 }
 
@@ -176,40 +205,25 @@ void * air(void* args){
     // Contrôle de l'aération et de la ventilation
     int niveau[2] = { 0 };
     while (run) {
-        sleep(1);
+        sem_wait(&verrou_action);
         //Mise à jour des actions toutes les secondes ou autres
+
         for (int i=0; i<NUM_GAZ; i++) pthread_mutex_lock(&mutex_alerte[i]);
         int a_max = alerte_max((struct Gaz**) args, NUM_GAZ);
         for (int i=0; i<NUM_GAZ; i++) pthread_mutex_unlock(&mutex_alerte[i]);
+
         if (a_max < 3) {
+
+            for (int i=0; i<NUM_GAZ; i++) pthread_mutex_lock(&mutex_valeur[i]);
             reaction(aug_max((struct Gaz**) args, NUM_GAZ), niveau, a_max);
+            for (int i=0; i<NUM_GAZ; i++) pthread_mutex_unlock(&mutex_valeur[i]);
+
         }
         else {
             reaction_max(niveau);
         }
     }
-}
-
-void * injection(void* args) {
-    // En vrai le logiciel de simulation n'a pas de fuite suffisamment importante pour que les injections soient nécessaires.
-    struct Gaz** gaz = (struct Gaz**) args;
-    int bool[NUM_GAZ] = { 0 };
-    char str[5];
-    while(run) {
-        sleep(1);
-        for (int i=0; i<NUM_GAZ; i++) {
-            if (!bool[i] && danger(*(gaz+i))) {
-                sprintf(str, "%s%d", "IG", i+1);
-                bool[i] = 1;
-                SendMessage(str);
-            }
-            else if (bool[i] && !danger(*(gaz+i))) {
-                sprintf(str, "%s%d", "AIG", i+1);
-                bool[i] = 0;
-                SendMessage(str);
-            }
-        }
-    }
+    pthread_exit(0);
 }
 
 int main(int argc, char** argv) {
@@ -219,12 +233,14 @@ int main(int argc, char** argv) {
         sem_init(&verrou_controle[i], 0, 1);
         sem_wait(&verrou_controle[i]);
     }
+    sem_init(&verrou_action, 0, 1);
+    sem_wait(&verrou_action);
 
     /* Préparation des paramètres pour la création des tâches */
     pthread_t* thread = calloc(NUM_THREADS, sizeof(pthread_t));
 
-    void * functions[NUM_THREADS] = {ecoute, [1 ... NUM_GAZ] = controle, air, injection, leds};
-    struct sched_param sched[NUM_THREADS] = {[0 ... NUM_GAZ] = SCHED_HAUTE, SCHED_MOYEN, SCHED_MOYEN, SCHED_BASSE};
+    void * functions[NUM_THREADS] = {ecoute, [1 ... NUM_GAZ] = controle, air, leds};
+    struct sched_param sched[NUM_THREADS] = {[0 ... NUM_GAZ+1] = SCHED_HAUTE, SCHED_BASSE};
     int sched_policy[NUM_THREADS] = {SCHED_FIFO, [1 ... NUM_GAZ] = SCHED_RR, [NUM_GAZ+1 ... NUM_THREADS-1] = SCHED_FIFO};
 
     struct Gaz* args_action[NUM_GAZ];
