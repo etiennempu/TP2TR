@@ -11,6 +11,7 @@ struct Gaz* newGaz(int index) {
     gaz->value = malloc(sizeof(int));
     gaz->alerte = malloc(sizeof(int));
     gaz->aug = 0;
+    gaz->period = 1;
     return gaz;
 }
 
@@ -44,4 +45,18 @@ int aug_max(struct Gaz** gaz, int nb_gaz) {
         i++;
     }
     return max;
+}
+
+void aug_adapt(struct Gaz* gaz, int tmp) {
+    if (tmp != 0) gaz->aug++;
+        // Ou alors la fuite a déjà baissé et on est encore en train d'utiliser une action trop importante
+    else gaz->aug = (gaz->aug > 0) ? gaz->aug-- : 0;
+}
+
+void up_period(struct Gaz* gaz) {
+    gaz->period++;
+}
+
+void down_period(struct Gaz* gaz, int last_wait) {
+    gaz->period = last_wait;
 }

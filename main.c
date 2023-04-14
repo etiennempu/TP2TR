@@ -18,6 +18,8 @@
 #define SCHED_MOYEN 2
 #define SCHED_BASSE 1
 
+#define PERIOD_ACTION 1 //La période de mise à jour des actions, ici 1 seconde
+
 // Définition des seuils d'alerte
 
 #define ALERTE_B 20
@@ -39,7 +41,6 @@
 
 int run = 1; // Indiquer l'arrêt des tâches (mot clé extern : pour que les fonctions de mesure présente dans d'autres fichiers y ai accès)
 sem_t verrou_controle[NUM_GAZ]; // Synchroniser les tâches "contrôle" avec l'écoute
-sem_t verrou_action; // Pour indiquer au thread action qu'un le statut d'un gaz a été modifié
 pthread_mutex_t mutex_alerte[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
 pthread_mutex_t mutex_valeur[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
 pthread_mutex_t mutex_aug[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
@@ -47,12 +48,21 @@ pthread_mutex_t mutex_aug[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
 void* ecoute(void* args) {
     struct Gaz** gaz = (struct Gaz**) args;
 
+    /**Cette liste de booleens, sert à traiter la situation où on ne reçoit plus de message pour un gaz, car il n'évolue plus. 
+    * Cependant, celui-ci présente peut-être encore une fuite et dans ce cas on va débloquer le sémaphore quand même
+    */
+    int securite[NUM_GAZ] = {0};  
+
     char* buffer;
     /* Le système ne reçoit des messages que si le logiciel de simulation communique */
     while(strcmp((buffer = ReceiveMessage()), "") != 0) {
         printf("T : %s\n", buffer);
         char** cmds = parser(buffer, "\n");
         char** shards;
+
+        for (int i=0; i<NUM_GAZ; i++) {
+            securite[i]++;
+        }
 
         while( cmds != NULL ) {
             char c[1] = { *(*(cmds)+2) };
@@ -65,8 +75,18 @@ void* ecoute(void* args) {
             pthread_mutex_unlock(&mutex_valeur[i-1]);
 
             sem_post(&verrou_controle[i-1]);
+            //down_period(gaz[i], securite[i]);
+            securite[i-1] = 0;
             cmds = loop_parser(cmds, "\n");
             free(shards);
+        }
+
+        for (int i=0; i<NUM_GAZ; i++) {
+            if (securite[i] > gaz[i]->period) {
+                sem_post(&verrou_controle[i]);
+                //up_period(gaz[i]);
+                securite[i] = 0;
+            }
         }
 
         free(cmds);
@@ -153,6 +173,7 @@ void * controle(void* arg) {
             tmp = taux;
         }
         else {
+            // En réalité il ne le saura pas
             pthread_mutex_lock(&mutex_aug[gaz.indice]);
             // Si pas de changement alors peut-être l'action ne fait que compenser donc augmentaion artificielle de la fuite pour pousser à faire une action plus forte
             if (tmp != 0) gaz.aug++;
@@ -160,9 +181,7 @@ void * controle(void* arg) {
             else gaz.aug = (gaz.aug > 0) ? gaz.aug-- : 0;
             pthread_mutex_unlock(&mutex_aug[gaz.indice]);
         }
-        sem_post(&verrou_action);
     }
-    sem_post(&verrou_action);
     pthread_exit(0);
 }
 
@@ -217,12 +236,12 @@ void reaction_max(int* niveau) {
     }
 }
 
-void * air(void* args){
+void * action(void* args){
     // Contrôle de l'aération et de la ventilation
     int niveau[2] = { 0 };
     while (run) {
-        for (int i=0; i<3; i++) sem_wait(&verrou_action);
         //Mise à jour des actions toutes les secondes ou autres
+        sleep(PERIOD_ACTION);
 
         for (int i=0; i<NUM_GAZ; i++) pthread_mutex_lock(&mutex_alerte[i]);
         int a_max = alerte_max((struct Gaz**) args, NUM_GAZ);
@@ -248,12 +267,11 @@ int main(int argc, char** argv) {
     for (int i=0;i++;i<3) {
         sem_init(&verrou_controle[i], 0, 0);
     }
-    sem_init(&verrou_action, 0, 0);
 
     /* Préparation des paramètres pour la création des tâches */
     pthread_t* thread = calloc(NUM_THREADS, sizeof(pthread_t));
 
-    void * functions[NUM_THREADS] = {ecoute, [1 ... NUM_GAZ] = controle, air, leds};
+    void * functions[NUM_THREADS] = {ecoute, [1 ... NUM_GAZ] = controle, action, leds};
     struct sched_param sched[NUM_THREADS] = {[0 ... NUM_GAZ+1] = SCHED_HAUTE, SCHED_BASSE};
     int sched_policy[NUM_THREADS] = {SCHED_FIFO, [1 ... NUM_GAZ] = SCHED_RR, [NUM_GAZ+1 ... NUM_THREADS-1] = SCHED_FIFO};
 
