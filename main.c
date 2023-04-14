@@ -230,11 +230,9 @@ int main(int argc, char** argv) {
 
     /* Initialisation des sémaphores */
     for (int i=0;i++;i<3) {
-        sem_init(&verrou_controle[i], 0, 1);
-        sem_wait(&verrou_controle[i]);
+        sem_init(&verrou_controle[i], 0, 0);
     }
-    sem_init(&verrou_action, 0, 1);
-    sem_wait(&verrou_action);
+    sem_init(&verrou_action, 0, 0);
 
     /* Préparation des paramètres pour la création des tâches */
     pthread_t* thread = calloc(NUM_THREADS, sizeof(pthread_t));
