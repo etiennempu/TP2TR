@@ -45,7 +45,3 @@ int aug_max(struct Gaz** gaz, int nb_gaz) {
     }
     return max;
 }
-
-int danger(struct Gaz* gaz) {
-    return(*(gaz->alerte) == ALERTE_MAX ? 1 : 0);
-}
