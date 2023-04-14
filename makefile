@@ -1,5 +1,5 @@
 CXX=gcc
-CXXFLAGS= -Wall -pedantic -Og -fsanitize=address -pthread
+CXXFLAGS= -Wall -pedantic -Og -pthread
 EXEC=main
 
 all: $(EXEC)
