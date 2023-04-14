@@ -44,6 +44,8 @@ void SendMessage(char* format){
 			puts("Send failed");
 			exit(1);
 		}
+		reaction_time[reactionIndex] = time(NULL);
+		reactionIndex++
 }
 
 void FermerClient(){

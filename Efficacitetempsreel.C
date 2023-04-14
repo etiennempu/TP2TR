@@ -4,14 +4,14 @@
 
 #define NUM_SENSORS 3 //nombre de capteurs
 
-float calculateEfficiency(float sensorReadings[], float lastSensorReadings[]) {
+float calculateEfficiency(float sensorReadings[]) {
     float num1 = 0;
     float num2 = 0;
     int i;
 
-    for (i = 0; i < NUM_SENSORS; i++) {
-        num1 += sensorReadings[i] / lastSensorReadings[i];
-        num2 += pow(sensorReadings[i] / lastSensorReadings[i], 2) - sensorReadings[i] / lastSensorReadings[i] + 1;
+    for (i = 1; i < NUM_SENSORS; i++) {
+        num1 += sensorReadings[i] / sensorReadings[i-1];
+        num2 += pow(sensorReadings[i] / sensorReadings[i-1], 2) - sensorReadings[i] / sensorReadings[i-1] + 1;
         lastSensorReadings[i] = sensorReadings[i];
     }
 

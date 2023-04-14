@@ -41,6 +41,13 @@
 #define V2 9
 #define INJ 20
 
+time_t arrival_time[];
+int arrivalIndex=0;
+time_t reaction_time[];
+int reactionIndex=0;
+
+
+
 int run = 1; // Indiquer l'arrêt des tâches (mot clé extern : pour que les fonctions de mesure présente dans d'autres fichiers y ai accès)
 sem_t verrou_controle[NUM_GAZ]; // Synchroniser les tâches "contrôle" avec l'écoute
 sem_t verrou_action; // Pour indiquer au thread action qu'un le statut d'un gaz a été modifié
@@ -306,6 +313,16 @@ int main(int argc, char** argv) {
         freeGaz(args_action[i]);
     }
     free(thread);
+	
+	printf("arrival %d\n", arrivalIndex);
+	printf("reac %d\n", reactionIndex);
+	if (arrivalIndex==reactionIndex)
+	{
+		for(int i=0;i<arrivalIndex;i++)
+		{
+			calculateResponseTime(arrival_time[arrivalIndex],reaction_time[reactionIndex]);
+		}
+	}
 
     exit(0);
 }

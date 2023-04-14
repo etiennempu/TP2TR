@@ -36,10 +36,10 @@ int calcul_cout(int* actions, int taille_actions) {
 }
 
 // Exemple d'utilisation de la fonction
-int main() {
+/*int main() {
     int actions[] = {1, 2, 4}; // Aération niveau 1, Aération niveau 2, Ventilation niveau 1
     int taille_actions = 3;
     int cout = calcul_cout(actions, taille_actions);
     printf("Le coût total des actions est : %d", cout);
     return 0;
-}
+}*/

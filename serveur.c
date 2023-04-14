@@ -42,7 +42,8 @@ char* ReceiveMessage()
 		perror("recv failed");
 		exit(1);
 	}
-
+	arrival_time[arrivalIndex] = time(NULL);
+	arrivalIndex++;
 	return buffer;
 }
 

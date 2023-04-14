@@ -3,7 +3,7 @@
 
 #define D 1 // échéance de l'action de calcul de la réaction (en secondes)
 
-typedef struct {
+/*typedef struct {
   float gas1;
   float gas2;
   float gas3;
@@ -12,7 +12,7 @@ typedef struct {
 typedef struct {
   int alarm_level;
   char alarm_color;
-} Alarm;
+} Alarm;*/
 
 // fonction pour calculer le temps de réponse
 float calculateResponseTime(time_t arrival_time, time_t reaction_time) {
@@ -40,7 +40,7 @@ float calculateFailureRate(float* response_times, int num_events) {
 }
 
 // exemple d'utilisation
-int main() {
+/*int main() {
   // initialiser les données de capteur et l'alarme
   SensorData sensor_data = {0.05, 0.1, 0.02};
   Alarm alarm = {0, '\0'};
@@ -73,7 +73,7 @@ int main() {
   printf("Taux d'échec: %.2f %%\n", failure_rate * 100);
 
   return 0;
-}
+}*/
 
 //Temps de réponse: 0.00 secondes
 //Temps de réponse moyen: 0.00 secondes
