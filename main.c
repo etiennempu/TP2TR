@@ -52,19 +52,16 @@ void* ecoute(void* args) {
     * Cependant, celui-ci présente peut-être encore une fuite et dans ce cas on va débloquer le sémaphore quand même
     */
     int securite[NUM_GAZ] = {0};  
+    int nb_mes = 0;
 
     char* buffer;
     /* Le système ne reçoit des messages que si le logiciel de simulation communique */
     while(strcmp((buffer = ReceiveMessage()), "") != 0) {
-        printf("T : %s\n", buffer);
         char** cmds = parser(buffer, "\n");
         char** shards;
 
-        for (int i=0; i<NUM_GAZ; i++) {
-            securite[i]++;
-        }
-
         while( cmds != NULL ) {
+            nb_mes++;
             char c[1] = { *(*(cmds)+2) };
             int i = atoi(c);
             shards = parser(*(cmds), c);
@@ -75,16 +72,21 @@ void* ecoute(void* args) {
             pthread_mutex_unlock(&mutex_valeur[i-1]);
 
             sem_post(&verrou_controle[i-1]);
-            //down_period(gaz[i], securite[i]);
+            down_period(gaz[i-1], securite[i]);
             securite[i-1] = 0;
             cmds = loop_parser(cmds, "\n");
             free(shards);
         }
 
         for (int i=0; i<NUM_GAZ; i++) {
+            securite[i] += nb_mes/3;
+        }
+        nb_mes = nb_mes%3;
+
+        for (int i=0; i<NUM_GAZ; i++) {
             if (securite[i] > gaz[i]->period) {
                 sem_post(&verrou_controle[i]);
-                //up_period(gaz[i]);
+                up_period(gaz[i]);
                 securite[i] = 0;
             }
         }
