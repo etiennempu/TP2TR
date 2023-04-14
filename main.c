@@ -29,7 +29,15 @@
 
 #define FUITE {0, 1, 3, 6, 7, 9, 11, 12, 14}
 
-int run = 1; // Indiquer l'arrêt des tâches
+// Définition des coûts des actions
+#define A1 1
+#define A2 2
+#define A3 3
+#define V1 6
+#define V2 9
+#define INJ 20
+
+int run = 1; // Indiquer l'arrêt des tâches (mot clé extern : pour que les fonctions de mesure présente dans d'autres fichiers y ai accès)
 sem_t verrou_controle[NUM_GAZ]; // Synchroniser les tâches "contrôle" avec l'écoute
 sem_t verrou_action; // Pour indiquer au thread action qu'un le statut d'un gaz a été modifié
 pthread_mutex_t mutex_alerte[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
@@ -122,8 +130,16 @@ void * controle(void* arg) {
                     injection = 1;
                     sprintf(message, "IG%d", gaz.indice+1);
                     SendMessage(message);
+                    /* COUT
+                    cout_total += INJ;
+                    */
                 }
-                else if (injection) {
+                /* COUT
+                else if (*gaz.alerte == 4 && injection) {
+                    cout_total += INJ;
+                }
+                */
+                else if (*gaz.alerte != 4 && injection) {
                     injection = 0;
                     sprintf(message, "AIG%d", gaz.indice+1);
                     SendMessage(message);
@@ -205,7 +221,7 @@ void * air(void* args){
     // Contrôle de l'aération et de la ventilation
     int niveau[2] = { 0 };
     while (run) {
-        sem_wait(&verrou_action);
+        for (int i=0; i<NUM_GAZ; i++) sem_wait(&verrou_action);
         //Mise à jour des actions toutes les secondes ou autres
 
         for (int i=0; i<NUM_GAZ; i++) pthread_mutex_lock(&mutex_alerte[i]);
