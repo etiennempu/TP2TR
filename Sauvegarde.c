@@ -14,7 +14,7 @@ void Sauvegarde(char* fileName,float data){
     {
 		
 		
-		fprintf(fichier, data);
+		fprintf(fichier, "data");
 
                 
 		fclose(fichier);

@@ -45,7 +45,7 @@ void SendMessage(char* format){
 			exit(1);
 		}
 		reaction_time[reactionIndex] = time(NULL);
-		reactionIndex++
+		reactionIndex++;
 }
 
 void FermerClient(){
