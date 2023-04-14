@@ -5,7 +5,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "tempsreponsetempsreel.h"
+
+extern time_t reaction_time[300];
+extern int reactionIndex;
 
 
 #define CLIENT_PORT 1232

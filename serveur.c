@@ -5,8 +5,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "tempsreponsetempsreel.h"
 
+extern time_t arrival_time[300];
+extern int arrivalIndex;
 
 #define SERV_PORT 1231
 
