@@ -4,6 +4,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <time.h>
+
 
 
 extern time_t reaction_time[300];
