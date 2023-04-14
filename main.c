@@ -246,6 +246,7 @@ void * air(void* args){
         else {
             reaction_max(niveau);
         }
+		//ici
     }
     pthread_exit(0);
 }

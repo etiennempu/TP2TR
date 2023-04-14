@@ -1,9 +1,12 @@
 #ifndef tempsreponsetempsreel
 #define tempsreponsetempsreel
 
-time_t arrival_time[];
+#include <time.h>
+
+
+time_t arrival_time[300];
 int arrivalIndex=0;
-time_t reaction_time[];
+time_t reaction_time[300];
 int reactionIndex=0;
 
 float calculateResponseTime(time_t arrival_time, time_t reaction_time);
