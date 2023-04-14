@@ -42,6 +42,7 @@ sem_t verrou_controle[NUM_GAZ]; // Synchroniser les tâches "contrôle" avec l'�
 sem_t verrou_action; // Pour indiquer au thread action qu'un le statut d'un gaz a été modifié
 pthread_mutex_t mutex_alerte[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
 pthread_mutex_t mutex_valeur[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
+pthread_mutex_t mutex_aug[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
 
 void* ecoute(void* args) {
     struct Gaz** gaz = (struct Gaz**) args;
@@ -49,6 +50,7 @@ void* ecoute(void* args) {
     char* buffer;
     /* Le système ne reçoit des messages que si le logiciel de simulation communique */
     while(strcmp((buffer = ReceiveMessage()), "") != 0) {
+        printf("T : %s\n", buffer);
         char** cmds = parser(buffer, "\n");
         char** shards;
 
@@ -83,10 +85,6 @@ void * leds(void* arg) {
     //Allumer les leds de la Sense Hat
 }
 
-void bis_inject() {
-
-}
-
 void * controle(void* arg) {
     // Effectue le contrôle d'un gaz
     struct Gaz gaz = *(struct Gaz*) arg;
@@ -100,7 +98,9 @@ void * controle(void* arg) {
     const char* c;
     while(run) {
         sem_wait(&verrou_controle[gaz.indice]);
+        pthread_mutex_lock(&mutex_valeur[gaz.indice]);
         int taux = *(gaz.value);
+        pthread_mutex_unlock(&mutex_valeur[gaz.indice]);
         if (taux != tmp) {
             pthread_mutex_lock(&mutex_alerte[gaz.indice]);
             if (taux < ALERTE_B) {
@@ -153,12 +153,12 @@ void * controle(void* arg) {
             tmp = taux;
         }
         else {
-            pthread_mutex_lock(&mutex_valeur[gaz.indice]);
+            pthread_mutex_lock(&mutex_aug[gaz.indice]);
             // Si pas de changement alors peut-être l'action ne fait que compenser donc augmentaion artificielle de la fuite pour pousser à faire une action plus forte
             if (tmp != 0) gaz.aug++;
             // Ou alors la fuite a déjà baissé et on est encore en train d'utiliser une action trop importante
             else gaz.aug = (gaz.aug > 0) ? gaz.aug-- : 0;
-            pthread_mutex_unlock(&mutex_valeur[gaz.indice]);
+            pthread_mutex_unlock(&mutex_aug[gaz.indice]);
         }
         sem_post(&verrou_action);
     }
@@ -221,7 +221,7 @@ void * air(void* args){
     // Contrôle de l'aération et de la ventilation
     int niveau[2] = { 0 };
     while (run) {
-        for (int i=0; i<NUM_GAZ; i++) sem_wait(&verrou_action);
+        for (int i=0; i<3; i++) sem_wait(&verrou_action);
         //Mise à jour des actions toutes les secondes ou autres
 
         for (int i=0; i<NUM_GAZ; i++) pthread_mutex_lock(&mutex_alerte[i]);
@@ -230,9 +230,9 @@ void * air(void* args){
 
         if (a_max < 3) {
 
-            for (int i=0; i<NUM_GAZ; i++) pthread_mutex_lock(&mutex_valeur[i]);
+            for (int i=0; i<NUM_GAZ; i++) pthread_mutex_lock(&mutex_aug[i]);
             reaction(aug_max((struct Gaz**) args, NUM_GAZ), niveau, a_max);
-            for (int i=0; i<NUM_GAZ; i++) pthread_mutex_unlock(&mutex_valeur[i]);
+            for (int i=0; i<NUM_GAZ; i++) pthread_mutex_unlock(&mutex_aug[i]);
 
         }
         else {
