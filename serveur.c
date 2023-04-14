@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include "tempsreponsetempsreel.h"
+
+
 #define SERV_PORT 1231
 
 #define TAILLE_MESSAGE 22 // Longueur maximum d'un message 7 (LG + identifiant : 1|2|3 + valeur : 00...100 + \n) * 3 messages + \0

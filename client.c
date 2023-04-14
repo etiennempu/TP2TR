@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#include "tempsreponsetempsreel.h"
+
+
 #define CLIENT_PORT 1232
 
 #define TAILLE_MESSAGE 10

@@ -14,6 +14,7 @@
 #include "Led.h"
 
 #include "utils.h"
+#include "tempsreponsetempsreel.h"
 
 
 #define NUM_GAZ 3
@@ -43,10 +44,7 @@
 #define V2 9
 #define INJ 20
 
-time_t arrival_time[];
-int arrivalIndex=0;
-time_t reaction_time[];
-int reactionIndex=0;
+
 
 
 
@@ -96,9 +94,6 @@ void * leds(void* arg) {
     //Allumer les leds de la Sense Hat
 }
 
-void bis_inject() {
-
-}
 
 void * controle(void* arg) {
     // Effectue le contrôle d'un gaz
