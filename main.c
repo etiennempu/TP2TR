@@ -398,7 +398,7 @@ int main(int argc, char** argv) {
 		
 		printf("arrival %d\n", arrivalIndex);
 		printf("reac %d\n", reactionIndex);
-		float totalTime = calculateResponseTime(debut, fin);
+		float totalTime = difftime(debut, fin);
 		printf("Temps de total d'execution: %f secondes\n", totalTime);
 		printf("nombre d'évènement: %d\n",arrivalIndex);
 		float avgTime =(float)total_time / arrivalIndex;
