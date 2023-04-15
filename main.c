@@ -364,10 +364,19 @@ int main(int argc, char** argv) {
     }
     free(thread);
 	
-	printf("arrival %d\n", arrivalIndex);
-	printf("reac %d\n", reactionIndex);
+	
 	if (arrivalIndex==reactionIndex)
 	{
+		printf("nombre d'évènement: %d\n",reactionIndex);
+		float avgTime =(float)total_time / reactionIndex;
+		printf("Temps de réponse moyen: %f secondes\n", avgTime);
+		float failure_rate= (float)total_failure/reactionIndex;
+		printf("Taux d'échec: %.2f %%\n", failure_rate * 100);
+	}
+	else
+	{
+		printf("arrival %d\n", arrivalIndex);
+		printf("reac %d\n", reactionIndex);
 		printf("nombre d'évènement: %d\n",reactionIndex);
 		float avgTime =(float)total_time / reactionIndex;
 		printf("Temps de réponse moyen: %f secondes\n", avgTime);
