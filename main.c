@@ -303,7 +303,6 @@ void * action(void* args){
 
 			total_time+=Difftime;
 			if(Difftime/1e9>1)total_failure++;
-			printf("Temps de réponse : %f ms\n",Difftime/1000000);
 		}
 		
 		
@@ -384,7 +383,7 @@ int main(int argc, char** argv) {
     free(thread);
 	
 	
-	if (arrivalIndex==reactionIndex-1)
+	if (arrivalIndex==reactionIndex)
 	{
 		
 		double totalTime = ((double)end.tv_sec*1e9 + end.tv_nsec) - ((double)start.tv_sec*1e9 + start.tv_nsec);
