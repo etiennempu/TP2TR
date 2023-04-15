@@ -4,13 +4,6 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <time.h>
-
-
-
-extern time_t reaction_time[300];
-extern int reactionIndex;
-
 
 #define CLIENT_PORT 1232
 
@@ -51,8 +44,6 @@ void SendMessage(char* format){
 			puts("Send failed");
 			exit(1);
 		}
-		//reaction_time[reactionIndex] = time(NULL);
-		reactionIndex++;
 }
 
 void FermerClient(){

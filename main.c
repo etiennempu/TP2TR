@@ -44,10 +44,12 @@
 #define V2 9
 #define INJ 20
 
-time_t arrival_time[300];
+time_t arrival_time;
 int arrivalIndex=0;
-time_t reaction_time[300];
+time_t reaction_time;
 int reactionIndex=0;
+float total_time=0;
+float total_failure=0;
 
 
 
@@ -74,6 +76,8 @@ void* ecoute(void* args) {
         char* buffer;
         while(strcmp((buffer = ReceiveMessage()), "") != 0) {
             if (!nb_mes) {
+				arrival_time = time(NULL);
+				arrivalIndex++;
                 for (int n=0; n<NUM_GAZ; n++) securite[n]++;
             }
 
@@ -281,7 +285,12 @@ void * action(void* args){
             reaction_max(niveau);
         }
 
-		//ici
+		reaction_time = time(NULL);
+		reactionIndex++;
+		float time=calculateResponseTime(arrival_time, reaction_time);
+		total_time+=time;
+		if(time>1)float total_failure++;
+		
 
 
         for (int i=0; i<NUM_GAZ; i++) sem_post(&verrou_action_crtl[i]);
@@ -359,10 +368,11 @@ int main(int argc, char** argv) {
 	printf("reac %d\n", reactionIndex);
 	if (arrivalIndex==reactionIndex)
 	{
-		for(int i=0;i<arrivalIndex;i++)
-		{
-			calculateResponseTime(arrival_time[arrivalIndex],reaction_time[reactionIndex]);
-		}
+		printf("nombre d'évènement: %d\n",reactionIndex);
+		float avgTime =(float)total_time / reactionIndex;
+		printf("Temps de réponse moyen: %f secondes\n", avgTime);
+		failure_rate= (float)total_failure/reactionIndex;
+		printf("Taux d'échec: %.2f %%\n", failure_rate * 100);
 	}
 
     exit(0);

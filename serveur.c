@@ -5,13 +5,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include <time.h>
-
-
-
-extern time_t arrival_time[300];
-extern int arrivalIndex;
-
 #include <errno.h>
 
 
