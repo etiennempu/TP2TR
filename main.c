@@ -295,15 +295,17 @@ void * action(void* args){
         else {
             reaction_max(niveau);
         }
+		if(run==1){
+			clock_gettime(CLOCK_REALTIME, &reactionTime);
+			reactionIndex++;
+			
+			double Difftime = ((double)reactionTime.tv_sec*1e9 + reactionTime.tv_nsec) - ((double)arrivalTime.tv_sec*1e9 + arrivalTime.tv_nsec);
 
-		clock_gettime(CLOCK_REALTIME, &reactionTime);
-		reactionIndex++;
+			total_time+=Difftime;
+			if(Difftime/1e9>1)total_failure++;
+			printf("Temps de réponse : %f ms\n",Difftime/1000000);
+		}
 		
-		double Difftime = ((double)reactionTime.tv_sec*1e9 + reactionTime.tv_nsec) - ((double)arrivalTime.tv_sec*1e9 + arrivalTime.tv_nsec);
-
-		total_time+=Difftime;
-		if(Difftime/1e9>1&&run==1)total_failure++;
-		printf("Temps de réponse : %f ms\n",Difftime/1000000);
 		
         for (int i=0; i<NUM_GAZ; i++) sem_post(&verrou_action_crtl[i]);
     }
@@ -402,7 +404,7 @@ int main(int argc, char** argv) {
 		printf("Temps de total d'execution: %f ms\n",totalTime/1000000); 
 		printf("nombre d'évènement: %d\n",arrivalIndex);
 		double avgTime =(double)total_time / arrivalIndex;
-		printf("Temps de réponse moyen: %f secondes\n", avgTime/1000000);
+		printf("Temps de réponse moyen: %f ms\n", avgTime/1000000);
 		float failure_rate= (float)total_failure/arrivalIndex;
 		printf("Taux d'échec: %.2f %%\n", failure_rate * 100);
 	}
