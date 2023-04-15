@@ -137,8 +137,10 @@ void * leds(void* arg) {
 		int i = 0;
 		while (i < NUM_GAZ ) {
 			int alert=*(gaz[i]->alerte);
-			printf("index: %d alert: %d\n",index,alert);
-			LedUpdate((int)((i+1)+3*alert));
+			int id=i+1;
+			printf("index: %d alert: %d\n",id,alert);
+			LedUpdate((int)(id+3*alert));
+			i++;
 			
 		}
 		
