@@ -132,6 +132,7 @@ void * leds(void* arg) {
 	struct Gaz gaz = *(struct Gaz*) arg;
 	int index =gaz.indice+1;
 	int alert =*(gaz.alerte);
+	printf("index: %d alert: %d",index,alert);
 	LedUpdate(index+3*alert);
 	sleep(1);
 	
@@ -385,12 +386,15 @@ int main(int argc, char** argv) {
 		printf("Temps de réponse moyen: %f secondes\n", avgTime);
 		float failure_rate= (float)total_failure/reactionIndex;
 		printf("Taux d'échec: %.2f %%\n", failure_rate * 100);
-		printf("Le coût total des actions est : %d", cout);
+		printf("Le coût total des actions est : %d\n", cout);
 	}
-	else
+	else                                             
 	{
+		
 		printf("arrival %d\n", arrivalIndex);
 		printf("reac %d\n", reactionIndex);
+		float totalTime = calculateResponseTime(debut, fin);
+		printf("Temps de total d'execution: %f secondes\n", totalTime);
 		printf("nombre d'évènement: %d\n",reactionIndex);
 		float avgTime =(float)total_time / reactionIndex;
 		printf("Temps de réponse moyen: %f secondes\n", avgTime);
