@@ -18,7 +18,7 @@
 
 
 #define NUM_GAZ 3
-#define NUM_THREADS 3+NUM_GAZ
+#define NUM_THREADS 4+NUM_GAZ
 
 #define SCHED_HAUTE 3
 #define SCHED_MOYEN 2
@@ -129,12 +129,15 @@ void* ecoute(void* args) {
 
 void * leds(void* arg) {
     //Allumer les leds de la Sense Hat
+	
 	struct Gaz gaz = *(struct Gaz*) arg;
-	int index =gaz.indice+1;
-	int alert =*(gaz.alerte);
-	printf("index: %d alert: %d",index,alert);
-	LedUpdate(index+3*alert);
-	sleep(1);
+	while (run) {
+		int index =gaz.indice+1;
+		int alert =*(gaz.alerte);
+		printf("index: %d alert: %d",index,alert);
+		LedUpdate(index+3*alert);
+		sleep(1);
+	}
 	
 	
 }
@@ -400,7 +403,7 @@ int main(int argc, char** argv) {
 		printf("Temps de réponse moyen: %f secondes\n", avgTime);
 		float failure_rate= (float)total_failure/reactionIndex;
 		printf("Taux d'échec: %.2f %%\n", failure_rate * 100);
-		printf("Le coût total des actions est : %d", cout);
+		printf("Le coût total des actions est : %d\n", cout);
 	}
 
     exit(0);
