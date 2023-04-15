@@ -302,7 +302,7 @@ void * action(void* args){
 		reactionIndex++;
 		float time=calculateResponseTime(arrival_time, reaction_time);
 		total_time+=time;
-		if(time>1&&run)total_failure++;
+		if(time>1&&run==1)total_failure++;
 		printf("Temps de réponse : %f secondes\n", time);
 
 		
