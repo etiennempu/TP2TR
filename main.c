@@ -130,13 +130,19 @@ void* ecoute(void* args) {
 void * leds(void* arg) {
     //Allumer les leds de la Sense Hat
 	
-	struct Gaz gaz = *(struct Gaz*) arg;
+	struct Gaz** gaz = (struct Gaz**) arg;
+   
+    
 	while (run) {
-		int index =gaz.indice+1;
-		int alert =*(gaz.alerte);
-		printf("index: %d alert: %d\n",index,alert);
-		LedUpdate(index+3*alert);
-		sleep(1);
+		int i = 1;
+		while (i < nb_gaz+1 ) {
+			int alert=*(gaz[i]->alerte)
+			printf("index: %d alert: %d\n",index,alert);
+			LedUpdate(index+3*alert);
+			
+		}
+		
+		sleep(1);		
 	}
 	
 	
