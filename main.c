@@ -43,11 +43,10 @@
 #define V2 9
 #define INJ 20
 
-time_t arrival_time;
+struct timespec arrivalTime,reactionTime;
 int arrivalIndex=0;
-time_t reaction_time;
 int reactionIndex=0;
-float total_time=0;
+double total_time=0;
 int total_failure=0;
 
 
@@ -75,7 +74,7 @@ void* ecoute(void* args) {
         char* buffer;
         while(strcmp((buffer = ReceiveMessage()), "") != 0) {
             if (!nb_mes) {
-				time(&arrival_time);
+				clock_gettime(CLOCK_REALTIME, &arrivalTime);
 				arrivalIndex++;
                 for (int n=0; n<NUM_GAZ; n++) securite[n]++;
             }
@@ -297,16 +296,15 @@ void * action(void* args){
             reaction_max(niveau);
         }
 
-		time(&reaction_time);
+		clock_gettime(CLOCK_REALTIME, &reactionTime);
 		reactionIndex++;
-		float Difftime=difftime(arrival_time, reaction_time);
+		
+		double Difftime = ((double)reactionTime.tv_sec*1e9 + reactionTime.tv_nsec) - ((double)arrivalTime.tv_sec*1e9 + arrivalTime.tv_nsec);
+
 		total_time+=Difftime;
 		if(Difftime>1&&run==1)total_failure++;
-		printf("Temps de réponse : %f secondes\n", reaction_time);
-
+		printf("Temps de réponse : %f ms\n",reaction_time/1000000);
 		
-
-
         for (int i=0; i<NUM_GAZ; i++) sem_post(&verrou_action_crtl[i]);
     }
     pthread_exit(0);
@@ -362,8 +360,9 @@ int main(int argc, char** argv) {
         pthread_setschedparam(thread[i], sched_policy[i], &sched[i]);
         printf("Creation Thread %d\n", i);
     }
-	time_t debut, fin;
-	time(&debut);
+	struct timespec start,end;
+	clock_gettime(CLOCK_REALTIME, &start);
+    
 
     /* On attend la fin des threads/tâches */
     for (int j=0; j<NUM_THREADS; j++) {
@@ -371,7 +370,7 @@ int main(int argc, char** argv) {
         printf("Sortie Thread %d\n", j);
     }
 	
-	time(&fin);
+	clock_gettime(CLOCK_REALTIME, &end);
 	LedUpdate(13);
     /* Fermeture des sockets */
     FermerServeur();
@@ -386,10 +385,6 @@ int main(int argc, char** argv) {
 	if (arrivalIndex==reactionIndex-1)
 	{
 		
-    struct timespec start,end;
-    clock_gettime(CLOCK_REALTIME, &start);
-    
-		clock_gettime(CLOCK_REALTIME, &end);
 		double totalTime = ((double)end.tv_sec*1e9 + end.tv_nsec) - ((double)start.tv_sec*1e9 + start.tv_nsec);
 		printf("Temps de total d'execution: %f ms\n",totalTime/1000000); 
 		printf("nombre d'évènement: %d\n",arrivalIndex);
