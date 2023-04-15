@@ -302,7 +302,7 @@ void * action(void* args){
 		float Difftime=difftime(arrival_time, reaction_time);
 		total_time+=Difftime;
 		if(Difftime>1&&run==1)total_failure++;
-		printf("Temps de réponse : %f secondes\n", Difftime);
+		printf("Temps de réponse : %f secondes\n", reaction_time);
 
 		
 
