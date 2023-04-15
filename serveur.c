@@ -45,7 +45,8 @@ char* ReceiveMessage()
 	char* buffer = calloc(TAILLE_MESSAGE, sizeof(char));
 	if( recv(sockReceive , buffer , TAILLE_MESSAGE , 0) < 0)
 	{
-		perror("recv failed");
+		printf("erreur\n");
+		//perror("recv failed");
 		//exit(1);
 		return "";
 	}
