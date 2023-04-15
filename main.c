@@ -362,14 +362,16 @@ int main(int argc, char** argv) {
         pthread_setschedparam(thread[i], sched_policy[i], &sched[i]);
         printf("Creation Thread %d\n", i);
     }
-	time_t debut=time(NULL);
+	time_t debut, fin;
+	time(&debut);
 
     /* On attend la fin des threads/tâches */
     for (int j=0; j<NUM_THREADS; j++) {
         pthread_join(thread[j], NULL);
         printf("Sortie Thread %d\n", j);
     }
-	time_t fin=time(NULL);
+	
+	time(&fin);
 	LedUpdate(13);
     /* Fermeture des sockets */
     FermerServeur();
@@ -383,7 +385,7 @@ int main(int argc, char** argv) {
 	
 	if (arrivalIndex==reactionIndex-1)
 	{
-		float totalTime = calculateResponseTime(debut, fin);
+		float totalTime = difftime(debut, fin);
 		printf("Temps de total d'execution: %f secondes\n", totalTime);
 		printf("nombre d'évènement: %d\n",arrivalIndex);
 		float avgTime =(float)total_time / arrivalIndex;
