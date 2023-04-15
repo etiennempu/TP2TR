@@ -128,7 +128,7 @@ void * leds(void* arg) {
     //Allumer les leds de la Sense Hat
 	
 	struct Gaz** gaz = (struct Gaz**) arg;
-	int alrtePreced[] = {0,0,0}
+	int alrtePreced[] = {0,0,0};
     
 	while (run) {
 		int i = 0;
