@@ -55,10 +55,8 @@ char* ReceiveMessage()
 	char* buffer = calloc(TAILLE_MESSAGE, sizeof(char));
 	if( (recv(sockReceive , buffer , TAILLE_MESSAGE , MSG_DONTWAIT) < 0) && (errno != EAGAIN))
 	{
-		printf("erreur\n");
-		//perror("recv failed");
-		//exit(1);
-		buffer="";
+		perror("recv failed");
+		exit(1);
 	}
 	//arrival_time[arrivalIndex] = time(NULL);
 	arrivalIndex++;
