@@ -128,7 +128,7 @@ void * leds(void* arg) {
     //Allumer les leds de la Sense Hat
 	
 	struct Gaz** gaz = (struct Gaz**) arg;
-   
+	int alrtePreced[] = {0,0,0}
     
 	while (run) {
 		int i = 0;
@@ -137,7 +137,7 @@ void * leds(void* arg) {
 		while (i < NUM_GAZ ) {
 			int alert=*(gaz[i]->alerte);
 			int id=i+1;
-			LedUpdate((int)(id+3*alert));
+			if(alert!=alrtePreced[i])LedUpdate((int)(id+3*alert));
 			i++;
 		}
 		for (int j=0; j<NUM_GAZ; j++) pthread_mutex_unlock(&mutex_alerte[j]);
