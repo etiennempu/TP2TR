@@ -302,7 +302,7 @@ void * action(void* args){
 		double Difftime = ((double)reactionTime.tv_sec*1e9 + reactionTime.tv_nsec) - ((double)arrivalTime.tv_sec*1e9 + arrivalTime.tv_nsec);
 
 		total_time+=Difftime;
-		if(Difftime>1&&run==1)total_failure++;
+		if(Difftime/1e9>1&&run==1)total_failure++;
 		printf("Temps de réponse : %f ms\n",Difftime/1000000);
 		
         for (int i=0; i<NUM_GAZ; i++) sem_post(&verrou_action_crtl[i]);
