@@ -385,8 +385,13 @@ int main(int argc, char** argv) {
 	
 	if (arrivalIndex==reactionIndex-1)
 	{
-		float totalTime = difftime(debut, fin);
-		printf("Temps de total d'execution: %f secondes\n", totalTime);
+		
+    struct timespec start,end;
+    clock_gettime(CLOCK_REALTIME, &start);
+    
+		clock_gettime(CLOCK_REALTIME, &end);
+		double totalTime = ((double)end.tv_sec*1e9 + end.tv_nsec) - ((double)start.tv_sec*1e9 + start.tv_nsec);
+		printf("Temps de total d'execution: %f ms\n",totalTime/1000000); 
 		printf("nombre d'évènement: %d\n",arrivalIndex);
 		float avgTime =(float)total_time / arrivalIndex;
 		printf("Temps de réponse moyen: %f secondes\n", avgTime);
