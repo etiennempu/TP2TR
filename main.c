@@ -135,12 +135,15 @@ void * leds(void* arg) {
     
 	while (run) {
 		int i = 0;
+		for (int j=0; j<NUM_GAZ; j++) pthread_mutex_lock(&mutex_alerte[j]);
+
 		while (i < NUM_GAZ ) {
 			int alert=*(gaz[i]->alerte);
 			int id=i+1;
 			LedUpdate((int)(id+3*alert));
 			i++;
 		}
+		for (int j=0; j<NUM_GAZ; j++) pthread_mutex_unlock(&mutex_alerte[j]);
 		
 		sleep(1);		
 	}
