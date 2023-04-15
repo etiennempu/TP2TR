@@ -46,7 +46,8 @@ char* ReceiveMessage()
 	if( recv(sockReceive , buffer , TAILLE_MESSAGE , 0) < 0)
 	{
 		perror("recv failed");
-		exit(1);
+		//exit(1);
+		return "";
 	}
 	arrival_time[arrivalIndex] = time(NULL);
 	arrivalIndex++;
