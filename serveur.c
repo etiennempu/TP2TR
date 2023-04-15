@@ -4,12 +4,16 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <stdlib.h>
+
 #include <time.h>
 
 
 
 extern time_t arrival_time[300];
 extern int arrivalIndex;
+
+#include <errno.h>
+
 
 #define SERV_PORT 1231
 
@@ -40,10 +44,16 @@ void AttenteOuvertureServeur() {
 	while ((connect(sockReceive , (struct sockaddr *)&serverReceive , sizeof(serverReceive))) == -1) ;
 }
 
+int test_close() {
+	char* message = "1";
+	int err = send(sockReceive , message , strlen(message) , 0);
+	return err;
+}
+
 char* ReceiveMessage()
 {
 	char* buffer = calloc(TAILLE_MESSAGE, sizeof(char));
-	if( recv(sockReceive , buffer , TAILLE_MESSAGE , 0) < 0)
+	if( (recv(sockReceive , buffer , TAILLE_MESSAGE , MSG_DONTWAIT) < 0) && (errno != EAGAIN))
 	{
 		printf("erreur\n");
 		//perror("recv failed");

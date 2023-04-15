@@ -24,8 +24,6 @@
 #define SCHED_MOYEN 2
 #define SCHED_BASSE 1
 
-#define PERIOD_ACTION 1 //La période de mise à jour des actions, ici 1 seconde
-
 // Définition des seuils d'alerte
 
 #define ALERTE_B 20
@@ -55,6 +53,9 @@ int reactionIndex=0;
 
 int run = 1; // Indiquer l'arrêt des tâches (mot clé extern : pour que les fonctions de mesure présente dans d'autres fichiers y ai accès)
 sem_t verrou_controle[NUM_GAZ]; // Synchroniser les tâches "contrôle" avec l'écoute
+sem_t verrou_action_crtl[NUM_GAZ]; // Synchroniser la tâche d'action
+sem_t verrou_action_ecou;
+
 pthread_mutex_t mutex_alerte[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
 pthread_mutex_t mutex_valeur[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
 pthread_mutex_t mutex_aug[NUM_GAZ] = { PTHREAD_MUTEX_INITIALIZER };
@@ -66,54 +67,58 @@ void* ecoute(void* args) {
     * Cependant, celui-ci présente peut-être encore une fuite et dans ce cas on va débloquer le sémaphore quand même
     */
     int securite[NUM_GAZ] = {0};  
+
     int nb_mes = 0;
+    while(test_close() >= 0) {
+        // Ceci est un test :
+        char* buffer;
+        while(strcmp((buffer = ReceiveMessage()), "") != 0) {
+            if (!nb_mes) {
+                for (int n=0; n<NUM_GAZ; n++) securite[n]++;
+            }
 
-    char* buffer;
-    /* Le système ne reçoit des messages que si le logiciel de simulation communique */
-    while(strcmp((buffer = ReceiveMessage()), "") != 0) {
-        char** cmds = parser(buffer, "\n");
-        char** shards;
+            char** cmds = parser(buffer, "\n");
+            char** shards;
 
-        while( cmds != NULL ) {
-            nb_mes++;
-            char c[1] = { *(*(cmds)+2) };
-            int i = atoi(c);
-            shards = parser(*(cmds), c);
-            int fuite = atoi(*(shards+1));
+            while( cmds != NULL ) {
+                nb_mes++;
+                char c[1] = { *(*(cmds)+2) };
+                int i = atoi(c);
+                shards = parser(*(cmds), c);
+                int fuite = atoi(*(shards+1));
             
-            pthread_mutex_lock(&mutex_valeur[i-1]);
-            majgaz(gaz[i-1], fuite);
-            pthread_mutex_unlock(&mutex_valeur[i-1]);
+                pthread_mutex_lock(&mutex_valeur[i-1]);
+                majgaz(gaz[i-1], fuite);
+                pthread_mutex_unlock(&mutex_valeur[i-1]);
 
-            sem_post(&verrou_controle[i-1]);
-            down_period(gaz[i-1], securite[i]);
-            securite[i-1] = 0;
-            cmds = loop_parser(cmds, "\n");
-            free(shards);
+                sem_post(&verrou_controle[i-1]);
+                down_period(gaz[i-1], securite[i]);
+                securite[i-1] = 0;
+                cmds = loop_parser(cmds, "\n");
+                free(shards);
+            }
+
+            free(cmds);
+            free(buffer);
         }
-
-        for (int i=0; i<NUM_GAZ; i++) {
-            securite[i] += nb_mes/3;
-        }
-        nb_mes = nb_mes%3;
-
-        for (int i=0; i<NUM_GAZ; i++) {
-            if (securite[i] > gaz[i]->period) {
-                sem_post(&verrou_controle[i]);
-                up_period(gaz[i]);
-                securite[i] = 0;
+        for (int n=0; n<NUM_GAZ; n++) {
+            if (securite[n] > gaz[n]->period) {
+                sem_post(&verrou_controle[n]);
+                up_period(gaz[n]);
+                securite[n] = 0;
             }
         }
-
-        free(cmds);
+        if (nb_mes != 0) {
+            sem_post(&verrou_action_ecou);
+            nb_mes = 0;
+        }
         free(buffer);
+        usleep(10000);
     }
-    free(buffer);
     run = 0;
-    for (int i=0; i<3; i++) {
-        //Pour libérer les tâches de contrôle. Elles effectuent leur dernier tout de boucle puis elles sortent de la boucle.
-        sem_post(&verrou_controle[i]);
-    }
+    //Pour libérer les tâches de contrôle. Elles effectuent leur dernier tout de boucle puis elles sortent de la boucle.
+    for (int i=0; i<3; i++) sem_post(&verrou_controle[i]);
+    sem_post(&verrou_action_ecou);
     pthread_exit(0);
 }
 
@@ -134,6 +139,8 @@ void * controle(void* arg) {
     const char* c;
     while(run) {
         sem_wait(&verrou_controle[gaz.indice]);
+        sem_wait(&verrou_action_crtl[gaz.indice]);
+
         pthread_mutex_lock(&mutex_valeur[gaz.indice]);
         int taux = *(gaz.value);
         pthread_mutex_unlock(&mutex_valeur[gaz.indice]);
@@ -157,7 +164,6 @@ void * controle(void* arg) {
             }
             else *(gaz.alerte) = 4;
             pthread_mutex_unlock(&mutex_alerte[gaz.indice]);
-
 
             if (*(gaz.alerte) != old_alerte) {
 
@@ -197,6 +203,7 @@ void * controle(void* arg) {
             else gaz.aug = (gaz.aug > 0) ? gaz.aug-- : 0;
             pthread_mutex_unlock(&mutex_aug[gaz.indice]);
         }
+        sem_post(&verrou_action_crtl[gaz.indice]);
     }
     pthread_exit(0);
 }
@@ -256,8 +263,8 @@ void * action(void* args){
     // Contrôle de l'aération et de la ventilation
     int niveau[2] = { 0 };
     while (run) {
-        //Mise à jour des actions toutes les secondes ou autres
-        sleep(PERIOD_ACTION);
+        sem_wait(&verrou_action_ecou);
+        for (int i=0; i<NUM_GAZ; i++) sem_wait(&verrou_action_crtl[i]);
 
         for (int i=0; i<NUM_GAZ; i++) pthread_mutex_lock(&mutex_alerte[i]);
         int a_max = alerte_max((struct Gaz**) args, NUM_GAZ);
@@ -273,7 +280,11 @@ void * action(void* args){
         else {
             reaction_max(niveau);
         }
+
 		//ici
+
+
+        for (int i=0; i<NUM_GAZ; i++) sem_post(&verrou_action_crtl[i]);
     }
     pthread_exit(0);
 }
@@ -283,7 +294,13 @@ int main(int argc, char** argv) {
     /* Initialisation des sémaphores */
     for (int i=0;i++;i<3) {
         sem_init(&verrou_controle[i], 0, 0);
+        sem_init(&verrou_action_crtl[i], 0, 0);
     }
+    sem_init(&verrou_action_ecou, 0, 0);
+    // Je ne sais pas pourquoi mais si j'initialise à 1 dans sem_init ou si le sem_post est dans la boucle ça ne marche pas
+    sem_post(&verrou_action_crtl[0]);
+    sem_post(&verrou_action_crtl[1]);
+    sem_post(&verrou_action_crtl[2]);
 
     /* Préparation des paramètres pour la création des tâches */
     pthread_t* thread = calloc(NUM_THREADS, sizeof(pthread_t));
