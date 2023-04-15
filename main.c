@@ -394,7 +394,7 @@ int main(int argc, char** argv) {
 		printf("Temps de total d'execution: %f ms\n",totalTime/1000000); 
 		printf("nombre d'évènement: %d\n",arrivalIndex);
 		double avgTime =(double)total_time / arrivalIndex;
-		printf("Temps de réponse moyen: %f secondes\n", avgTime/1000000);
+		printf("Temps de réponse moyen: %f ms\n", avgTime/1000000);
 		float failure_rate= (float)total_failure/arrivalIndex;
 		printf("Taux d'échec: %.2f %%\n", failure_rate * 100);
 	}
