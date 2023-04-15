@@ -30,7 +30,7 @@
 #define RED 0xF800
 #define GREEN 0x07E0
 #define YELLOW 0xFFE0
-#define WHITE 0xFF
+#define WHITE 0xFFFF
 
 int fbfd;
 uint16_t *map;
