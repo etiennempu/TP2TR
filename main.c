@@ -137,7 +137,11 @@ void * leds(void* arg) {
 		while (i < NUM_GAZ ) {
 			int alert=*(gaz[i]->alerte);
 			int id=i+1;
-			if(alert!=alrtePreced[i])LedUpdate((int)(id+3*alert));
+			if(alrtePreced[i]!=alert){
+				LedUpdate((int)(id+3*alert));
+				alrtePreced[i]=alert;
+			}
+				
 			i++;
 		}
 		for (int j=0; j<NUM_GAZ; j++) pthread_mutex_unlock(&mutex_alerte[j]);
