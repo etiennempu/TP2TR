@@ -58,9 +58,9 @@ char* ReceiveMessage()
 		printf("erreur\n");
 		//perror("recv failed");
 		//exit(1);
-		return "";
+		buffer="";
 	}
-	arrival_time[arrivalIndex] = time(NULL);
+	//arrival_time[arrivalIndex] = time(NULL);
 	arrivalIndex++;
 	return buffer;
 }
