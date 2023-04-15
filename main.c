@@ -49,7 +49,7 @@ int arrivalIndex=0;
 time_t reaction_time;
 int reactionIndex=0;
 float total_time=0;
-float total_failure=0;
+int total_failure=0;
 
 
 
@@ -289,7 +289,7 @@ void * action(void* args){
 		reactionIndex++;
 		float time=calculateResponseTime(arrival_time, reaction_time);
 		total_time+=time;
-		if(time>1)float total_failure++;
+		if(time>1)total_failure++;
 		
 
 
@@ -371,7 +371,7 @@ int main(int argc, char** argv) {
 		printf("nombre d'évènement: %d\n",reactionIndex);
 		float avgTime =(float)total_time / reactionIndex;
 		printf("Temps de réponse moyen: %f secondes\n", avgTime);
-		failure_rate= (float)total_failure/reactionIndex;
+		float failure_rate= (float)total_failure/reactionIndex;
 		printf("Taux d'échec: %.2f %%\n", failure_rate * 100);
 	}
 
