@@ -14,7 +14,6 @@
 #include "Led.h"
 
 #include "utils.h"
-#include "tempsreponsetempsreel.h"
 
 
 #define NUM_GAZ 3
@@ -76,7 +75,7 @@ void* ecoute(void* args) {
         char* buffer;
         while(strcmp((buffer = ReceiveMessage()), "") != 0) {
             if (!nb_mes) {
-				arrival_time = time(NULL);
+				time(&arrival_time);
 				arrivalIndex++;
                 for (int n=0; n<NUM_GAZ; n++) securite[n]++;
             }
@@ -298,12 +297,12 @@ void * action(void* args){
             reaction_max(niveau);
         }
 
-		reaction_time = time(NULL);
+		time(&reaction_time);
 		reactionIndex++;
-		float time=calculateResponseTime(arrival_time, reaction_time);
-		total_time+=time;
-		if(time>1&&run==1)total_failure++;
-		printf("Temps de réponse : %f secondes\n", time);
+		float Difftime=difftime(arrival_time, reaction_time);
+		total_time+=Difftime;
+		if(Difftime>1&&run==1)total_failure++;
+		printf("Temps de réponse : %f secondes\n", Difftime);
 
 		
 
