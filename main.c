@@ -18,7 +18,7 @@
 
 
 #define NUM_GAZ 3
-#define NUM_THREADS 4+NUM_GAZ
+#define NUM_THREADS 3+NUM_GAZ
 
 #define SCHED_HAUTE 3
 #define SCHED_MOYEN 2
@@ -134,7 +134,7 @@ void * leds(void* arg) {
 	while (run) {
 		int index =gaz.indice+1;
 		int alert =*(gaz.alerte);
-		printf("index: %d alert: %d",index,alert);
+		printf("index: %d alert: %d\n",index,alert);
 		LedUpdate(index+3*alert);
 		sleep(1);
 	}
