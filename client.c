@@ -31,7 +31,7 @@ void OuvrirClient() {
 
 	// Lier l'adresse locale au socket
 	memset(&serverSend, 0, sizeof(serverSend));
-	serverSend.sin_addr.s_addr = inet_addr("192.168.2.60");
+	serverSend.sin_addr.s_addr = inet_addr("192.168.2.97");
 	serverSend.sin_family = AF_INET;
 	serverSend.sin_port = htons( CLIENT_PORT );
 
