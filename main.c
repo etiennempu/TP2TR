@@ -50,6 +50,7 @@ time_t reaction_time;
 int reactionIndex=0;
 float total_time=0;
 int total_failure=0;
+int cout = 0;
 
 
 
@@ -128,6 +129,13 @@ void* ecoute(void* args) {
 
 void * leds(void* arg) {
     //Allumer les leds de la Sense Hat
+	struct Gaz gaz = *(struct Gaz*) arg;
+	int index =gaz.indice+1;
+	int alert =*(gaz.alerte);
+	LedUpdate(index+3*alert);
+	sleep(1);
+	
+	
 }
 
 void * controle(void* arg) {
@@ -176,15 +184,9 @@ void * controle(void* arg) {
                     injection = 1;
                     sprintf(message, "IG%d", gaz.indice+1);
                     SendMessage(message);
-                    /* COUT
-                    cout_total += INJ;
-                    */
+					cout += INJ;
                 }
-                /* COUT
-                else if (*gaz.alerte == 4 && injection) {
-                    cout_total += INJ;
-                }
-                */
+
                 else if (*gaz.alerte != 4 && injection) {
                     injection = 0;
                     sprintf(message, "AIG%d", gaz.indice+1);
@@ -224,9 +226,11 @@ void reaction(int pire_fuite, int* niveau, int alerte_max) {
             break;
         case 1:
             SendMessage("VL1");
+			cout += V1;
             break;
         default:
             SendMessage("VL2");
+			cout += V2;
         }
         niveau[1] = (alerte_max <= 2) ? alerte_max : 2;
     }
@@ -239,14 +243,17 @@ void reaction(int pire_fuite, int* niveau, int alerte_max) {
     }
     else if (pire_fuite <= seuil_fuite[s+1] && niveau[0] != 1) {
         SendMessage("AL1");
+		cout += A1;
         niveau[0] = 1;
     }
     else if (pire_fuite <= seuil_fuite[s+2] && niveau[0] != 2) {
         SendMessage("AL2");
+		cout += A2;
         niveau[0] = 2;
     }
     else if (niveau[0] != 3) {
         SendMessage("AL3");
+		cout += A3;
         niveau[0] = 3;
     }
 }
@@ -255,10 +262,12 @@ void reaction_max(int* niveau) {
     // La fuite est très grande toute les actions au maximum
     if (niveau[0] != 3) {
         SendMessage("AL3");
+		cout += 3;
         niveau[0] = 3;
     }
     if (niveau[1] != 2) {
         SendMessage("VL2");
+		cout += 9;
         niveau[1] = 2;
     }
 }
@@ -331,7 +340,7 @@ int main(int argc, char** argv) {
     }
 
     /* Création des sockets pour la communication */
-
+	LedUpdate(0);
     OuvrirServeur();
     OuvrirClient();
 
@@ -348,13 +357,15 @@ int main(int argc, char** argv) {
         pthread_setschedparam(thread[i], sched_policy[i], &sched[i]);
         printf("Creation Thread %d\n", i);
     }
+	time_t debut=time(NULL);
 
     /* On attend la fin des threads/tâches */
     for (int j=0; j<NUM_THREADS; j++) {
         pthread_join(thread[j], NULL);
         printf("Sortie Thread %d\n", j);
     }
-
+	time_t fin=time(NULL);
+	LedUpdate(13);
     /* Fermeture des sockets */
     FermerServeur();
     FermerClient();
@@ -367,11 +378,14 @@ int main(int argc, char** argv) {
 	
 	if (arrivalIndex==reactionIndex)
 	{
+		float totalTime = calculateResponseTime(debut, fin);
+		printf("Temps de total d'execution: %f secondes\n", totalTime);
 		printf("nombre d'évènement: %d\n",reactionIndex);
 		float avgTime =(float)total_time / reactionIndex;
 		printf("Temps de réponse moyen: %f secondes\n", avgTime);
 		float failure_rate= (float)total_failure/reactionIndex;
 		printf("Taux d'échec: %.2f %%\n", failure_rate * 100);
+		printf("Le coût total des actions est : %d", cout);
 	}
 	else
 	{
@@ -382,6 +396,7 @@ int main(int argc, char** argv) {
 		printf("Temps de réponse moyen: %f secondes\n", avgTime);
 		float failure_rate= (float)total_failure/reactionIndex;
 		printf("Taux d'échec: %.2f %%\n", failure_rate * 100);
+		printf("Le coût total des actions est : %d", cout);
 	}
 
     exit(0);

@@ -30,6 +30,7 @@
 #define RED 0xF800
 #define GREEN 0x07E0
 #define YELLOW 0xFFE0
+#define WHITE 0xFF
 
 int fbfd;
 uint16_t *map;
@@ -89,15 +90,15 @@ void LedUpdate(int index) {
 		
 		/* light it up! */
 		for (i = 0; i < 16; i++) {
-			*(p + G1[i]) = GREEN;
+			*(p + G1[i]) = WHITE;
 			
 		}
 		for (i = 0; i < 16; i++) {
-			*(p + G2[i]) = GREEN;
+			*(p + G2[i]) = WHITE;
 			
 		}
 		for (i = 0; i < 16; i++) {
-			*(p + G3[i]) = GREEN;
+			*(p + G3[i]) = WHITE;
 			
 		}
 		
@@ -107,7 +108,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G1[i]) = GREEN;
+			*(p + G1[i]) = WHITE;
 			
 		}
 		
@@ -118,7 +119,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G2[i]) = GREEN;
+			*(p + G2[i]) = WHITE;
 			
 		}
 		
@@ -129,7 +130,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G3[i]) = GREEN;
+			*(p + G3[i]) = WHITE;
 			
 		}
 		
@@ -139,7 +140,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G1[i]) = YELLOW;
+			*(p + G1[i]) = GREEN;
 			
 		}
 		
@@ -150,7 +151,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G2[i]) = YELLOW;
+			*(p + G2[i]) = GREEN;
 			
 		}
 		
@@ -161,7 +162,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G3[i]) = YELLOW;
+			*(p + G3[i]) = GREEN;
 			
 		}
 		
@@ -171,7 +172,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G1[i]) = RED;
+			*(p + G1[i]) = YELLOW;
 			
 		}
 		
@@ -182,7 +183,7 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
-			*(p + G2[i]) = RED;
+			*(p + G2[i]) = YELLOW;
 			
 		}
 		
@@ -193,13 +194,45 @@ void LedUpdate(int index) {
 		p = map;
 		
 		for (i = 0; i < 16; i++) {
+			*(p + G3[i]) = YELLOW;
+			
+		}
+		
+		break;
+	case 10 :
+	
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
+			*(p + G1[i]) = RED;
+			
+		}
+		
+		break;
+		
+	case 11 :
+	
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
+			*(p + G2[i]) = RED;
+			
+		}
+		
+		break;
+	
+	case 12 :
+	
+		p = map;
+		
+		for (i = 0; i < 16; i++) {
 			*(p + G3[i]) = RED;
 			
 		}
 		
 		break;
 		
-	case 10 :
+	case 13 :
 		
 		clear();
 		
